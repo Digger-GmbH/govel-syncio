@@ -67,6 +67,7 @@
             { "name": "enabled", "type": "bool", "nullable": false, "default": "true" },
             { "name": "inventory_sync_enabled", "type": "bool", "nullable": false, "default": "true" },
             { "name": "product_sync_enabled", "type": "bool", "nullable": false, "default": "false" },
+            { "name": "order_forwarding_enabled", "type": "bool", "nullable": false, "default": "false" },
             { "name": "inventory_direction", "type": "text", "nullable": false, "default": "'two_way'" },
             { "name": "match_by_barcode", "type": "bool", "nullable": false, "default": "true" },
             { "name": "create_missing_products", "type": "bool", "nullable": false, "default": "false" },
@@ -202,6 +203,41 @@
             {
               "name": "govel_syncio_sync_cursor__uniq",
               "columns": ["connection_id", "job_kind"],
+              "unique": true,
+              "method": "btree"
+            }
+          ]
+        },
+        {
+          "name": "govel_syncio_order_mapping",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            {
+              "name": "connection_id",
+              "type": "uuid",
+              "nullable": false,
+              "references": {
+                "table": "govel_syncio_connection",
+                "column": "id",
+                "onDelete": "cascade",
+                "onUpdate": "cascade"
+              }
+            },
+            { "name": "destination_shop_id", "type": "uuid", "nullable": false },
+            { "name": "dest_order_id", "type": "text", "nullable": false },
+            { "name": "dest_order_name", "type": "text", "nullable": true },
+            { "name": "source_order_id", "type": "text", "nullable": true },
+            { "name": "source_order_name", "type": "text", "nullable": true },
+            { "name": "last_tracking_number", "type": "text", "nullable": true },
+            { "name": "last_fulfillment_sync", "type": "timestamp with time zone", "nullable": true },
+            { "name": "created_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" },
+            { "name": "updated_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_order_mapping__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_order_mapping__uniq",
+              "columns": ["connection_id", "destination_shop_id", "dest_order_id"],
               "unique": true,
               "method": "btree"
             }

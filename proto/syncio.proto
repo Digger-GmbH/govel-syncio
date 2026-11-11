@@ -21,6 +21,10 @@ service SyncioService {
   rpc MapProductsBySku(MapProductsBySkuRequest) returns (MapProductsBySkuResponse);
   rpc SyncInventory(SyncInventoryRequest) returns (SyncInventoryResponse);
   rpc SyncProducts(SyncProductsRequest) returns (SyncProductsResponse);
+  rpc ForwardOrders(ForwardOrdersRequest) returns (ForwardOrdersResponse);
+  rpc SyncFulfillments(SyncFulfillmentsRequest) returns (SyncFulfillmentsResponse);
+
+  rpc ListOrderMappings(ListOrderMappingsRequest) returns (ListOrderMappingsResponse);
 
   rpc ListDefaultAttributes(ListDefaultAttributesRequest) returns (ListDefaultAttributesResponse);
 }
@@ -56,6 +60,7 @@ message UpsertConnectionRequest {
   optional bool match_by_barcode = 9;
   optional bool create_missing_products = 10;
   map<string, bool> attribute_toggles = 11;
+  optional bool order_forwarding_enabled = 12;
 }
 
 message Connection {
@@ -70,6 +75,7 @@ message Connection {
   bool match_by_barcode = 9;
   bool create_missing_products = 10;
   map<string, bool> attribute_toggles = 11;
+  bool order_forwarding_enabled = 12;
 }
 
 message ListAttributeTogglesRequest {
@@ -174,5 +180,74 @@ message SyncProductsResponse {
   int32 skipped = 3;
   int32 blocked = 4;
   repeated ProductSyncAction actions = 5;
+  string notes = 6;
+}
+
+message ListOrderMappingsRequest {
+  string connection_id = 1;
+  string destination_shop_id = 2;
+}
+
+message OrderMapping {
+  string id = 1;
+  string connection_id = 2;
+  string destination_shop_id = 3;
+  string dest_order_id = 4;
+  string dest_order_name = 5;
+  string source_order_id = 6;
+  string source_order_name = 7;
+  string last_tracking_number = 8;
+  string last_fulfillment_sync = 9;
+}
+
+message ListOrderMappingsResponse {
+  repeated OrderMapping mappings = 1;
+}
+
+message ForwardOrdersRequest {
+  string connection_id = 1;
+  bool dry_run = 2;
+}
+
+message OrderForwardAction {
+  string destination_shop_id = 1;
+  string dest_order_id = 2;
+  string dest_order_name = 3;
+  string source_order_id = 4;
+  string source_order_name = 5;
+  string action = 6; // forward | skip | blocked
+  string reason = 7;
+}
+
+message ForwardOrdersResponse {
+  int32 planned = 1;
+  int32 applied = 2;
+  int32 skipped = 3;
+  int32 blocked = 4;
+  repeated OrderForwardAction actions = 5;
+  string notes = 6;
+}
+
+message SyncFulfillmentsRequest {
+  string connection_id = 1;
+  bool dry_run = 2;
+}
+
+message FulfillmentSyncAction {
+  string destination_shop_id = 1;
+  string dest_order_id = 2;
+  string source_order_id = 3;
+  string tracking_number = 4;
+  string tracking_company = 5;
+  string action = 6; // sync | skip | blocked
+  string reason = 7;
+}
+
+message SyncFulfillmentsResponse {
+  int32 planned = 1;
+  int32 applied = 2;
+  int32 skipped = 3;
+  int32 blocked = 4;
+  repeated FulfillmentSyncAction actions = 5;
   string notes = 6;
 }

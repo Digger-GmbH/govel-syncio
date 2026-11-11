@@ -34,6 +34,12 @@ export function createApi(apiBase = "") {
       request("/api/jobs/sync-inventory", { method: "POST", body: JSON.stringify(body) }),
     syncProducts: (body) =>
       request("/api/jobs/sync-products", { method: "POST", body: JSON.stringify(body) }),
+    forwardOrders: (body) =>
+      request("/api/jobs/forward-orders", { method: "POST", body: JSON.stringify(body) }),
+    syncFulfillments: (body) =>
+      request("/api/jobs/sync-fulfillments", { method: "POST", body: JSON.stringify(body) }),
+    listOrderMappings: (connectionId) =>
+      request(`/api/order-mappings?connection_id=${encodeURIComponent(connectionId || "")}`),
   };
 }
 

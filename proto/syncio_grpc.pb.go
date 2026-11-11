@@ -29,6 +29,9 @@ const (
 	SyncioService_MapProductsBySku_FullMethodName      = "/plugins.govel_syncio.v1.SyncioService/MapProductsBySku"
 	SyncioService_SyncInventory_FullMethodName         = "/plugins.govel_syncio.v1.SyncioService/SyncInventory"
 	SyncioService_SyncProducts_FullMethodName          = "/plugins.govel_syncio.v1.SyncioService/SyncProducts"
+	SyncioService_ForwardOrders_FullMethodName         = "/plugins.govel_syncio.v1.SyncioService/ForwardOrders"
+	SyncioService_SyncFulfillments_FullMethodName      = "/plugins.govel_syncio.v1.SyncioService/SyncFulfillments"
+	SyncioService_ListOrderMappings_FullMethodName     = "/plugins.govel_syncio.v1.SyncioService/ListOrderMappings"
 	SyncioService_ListDefaultAttributes_FullMethodName = "/plugins.govel_syncio.v1.SyncioService/ListDefaultAttributes"
 )
 
@@ -50,6 +53,9 @@ type SyncioServiceClient interface {
 	MapProductsBySku(ctx context.Context, in *MapProductsBySkuRequest, opts ...grpc.CallOption) (*MapProductsBySkuResponse, error)
 	SyncInventory(ctx context.Context, in *SyncInventoryRequest, opts ...grpc.CallOption) (*SyncInventoryResponse, error)
 	SyncProducts(ctx context.Context, in *SyncProductsRequest, opts ...grpc.CallOption) (*SyncProductsResponse, error)
+	ForwardOrders(ctx context.Context, in *ForwardOrdersRequest, opts ...grpc.CallOption) (*ForwardOrdersResponse, error)
+	SyncFulfillments(ctx context.Context, in *SyncFulfillmentsRequest, opts ...grpc.CallOption) (*SyncFulfillmentsResponse, error)
+	ListOrderMappings(ctx context.Context, in *ListOrderMappingsRequest, opts ...grpc.CallOption) (*ListOrderMappingsResponse, error)
 	ListDefaultAttributes(ctx context.Context, in *ListDefaultAttributesRequest, opts ...grpc.CallOption) (*ListDefaultAttributesResponse, error)
 }
 
@@ -161,6 +167,36 @@ func (c *syncioServiceClient) SyncProducts(ctx context.Context, in *SyncProducts
 	return out, nil
 }
 
+func (c *syncioServiceClient) ForwardOrders(ctx context.Context, in *ForwardOrdersRequest, opts ...grpc.CallOption) (*ForwardOrdersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ForwardOrdersResponse)
+	err := c.cc.Invoke(ctx, SyncioService_ForwardOrders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *syncioServiceClient) SyncFulfillments(ctx context.Context, in *SyncFulfillmentsRequest, opts ...grpc.CallOption) (*SyncFulfillmentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncFulfillmentsResponse)
+	err := c.cc.Invoke(ctx, SyncioService_SyncFulfillments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *syncioServiceClient) ListOrderMappings(ctx context.Context, in *ListOrderMappingsRequest, opts ...grpc.CallOption) (*ListOrderMappingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOrderMappingsResponse)
+	err := c.cc.Invoke(ctx, SyncioService_ListOrderMappings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *syncioServiceClient) ListDefaultAttributes(ctx context.Context, in *ListDefaultAttributesRequest, opts ...grpc.CallOption) (*ListDefaultAttributesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListDefaultAttributesResponse)
@@ -189,6 +225,9 @@ type SyncioServiceServer interface {
 	MapProductsBySku(context.Context, *MapProductsBySkuRequest) (*MapProductsBySkuResponse, error)
 	SyncInventory(context.Context, *SyncInventoryRequest) (*SyncInventoryResponse, error)
 	SyncProducts(context.Context, *SyncProductsRequest) (*SyncProductsResponse, error)
+	ForwardOrders(context.Context, *ForwardOrdersRequest) (*ForwardOrdersResponse, error)
+	SyncFulfillments(context.Context, *SyncFulfillmentsRequest) (*SyncFulfillmentsResponse, error)
+	ListOrderMappings(context.Context, *ListOrderMappingsRequest) (*ListOrderMappingsResponse, error)
 	ListDefaultAttributes(context.Context, *ListDefaultAttributesRequest) (*ListDefaultAttributesResponse, error)
 	mustEmbedUnimplementedSyncioServiceServer()
 }
@@ -229,6 +268,15 @@ func (UnimplementedSyncioServiceServer) SyncInventory(context.Context, *SyncInve
 }
 func (UnimplementedSyncioServiceServer) SyncProducts(context.Context, *SyncProductsRequest) (*SyncProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncProducts not implemented")
+}
+func (UnimplementedSyncioServiceServer) ForwardOrders(context.Context, *ForwardOrdersRequest) (*ForwardOrdersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ForwardOrders not implemented")
+}
+func (UnimplementedSyncioServiceServer) SyncFulfillments(context.Context, *SyncFulfillmentsRequest) (*SyncFulfillmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncFulfillments not implemented")
+}
+func (UnimplementedSyncioServiceServer) ListOrderMappings(context.Context, *ListOrderMappingsRequest) (*ListOrderMappingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOrderMappings not implemented")
 }
 func (UnimplementedSyncioServiceServer) ListDefaultAttributes(context.Context, *ListDefaultAttributesRequest) (*ListDefaultAttributesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDefaultAttributes not implemented")
@@ -434,6 +482,60 @@ func _SyncioService_SyncProducts_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SyncioService_ForwardOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForwardOrdersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SyncioServiceServer).ForwardOrders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SyncioService_ForwardOrders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncioServiceServer).ForwardOrders(ctx, req.(*ForwardOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SyncioService_SyncFulfillments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncFulfillmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SyncioServiceServer).SyncFulfillments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SyncioService_SyncFulfillments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncioServiceServer).SyncFulfillments(ctx, req.(*SyncFulfillmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SyncioService_ListOrderMappings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrderMappingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SyncioServiceServer).ListOrderMappings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SyncioService_ListOrderMappings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncioServiceServer).ListOrderMappings(ctx, req.(*ListOrderMappingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SyncioService_ListDefaultAttributes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListDefaultAttributesRequest)
 	if err := dec(in); err != nil {
@@ -498,6 +600,18 @@ var SyncioService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SyncProducts",
 			Handler:    _SyncioService_SyncProducts_Handler,
+		},
+		{
+			MethodName: "ForwardOrders",
+			Handler:    _SyncioService_ForwardOrders_Handler,
+		},
+		{
+			MethodName: "SyncFulfillments",
+			Handler:    _SyncioService_SyncFulfillments_Handler,
+		},
+		{
+			MethodName: "ListOrderMappings",
+			Handler:    _SyncioService_ListOrderMappings_Handler,
 		},
 		{
 			MethodName: "ListDefaultAttributes",

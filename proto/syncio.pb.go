@@ -243,12 +243,13 @@ type UpsertConnectionRequest struct {
 	InventorySyncEnabled *bool                  `protobuf:"varint,6,opt,name=inventory_sync_enabled,json=inventorySyncEnabled,proto3,oneof" json:"inventory_sync_enabled,omitempty"`
 	ProductSyncEnabled   *bool                  `protobuf:"varint,7,opt,name=product_sync_enabled,json=productSyncEnabled,proto3,oneof" json:"product_sync_enabled,omitempty"`
 	// source_to_dest | dest_to_source | two_way
-	InventoryDirection    string          `protobuf:"bytes,8,opt,name=inventory_direction,json=inventoryDirection,proto3" json:"inventory_direction,omitempty"`
-	MatchByBarcode        *bool           `protobuf:"varint,9,opt,name=match_by_barcode,json=matchByBarcode,proto3,oneof" json:"match_by_barcode,omitempty"`
-	CreateMissingProducts *bool           `protobuf:"varint,10,opt,name=create_missing_products,json=createMissingProducts,proto3,oneof" json:"create_missing_products,omitempty"`
-	AttributeToggles      map[string]bool `protobuf:"bytes,11,rep,name=attribute_toggles,json=attributeToggles,proto3" json:"attribute_toggles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	InventoryDirection     string          `protobuf:"bytes,8,opt,name=inventory_direction,json=inventoryDirection,proto3" json:"inventory_direction,omitempty"`
+	MatchByBarcode         *bool           `protobuf:"varint,9,opt,name=match_by_barcode,json=matchByBarcode,proto3,oneof" json:"match_by_barcode,omitempty"`
+	CreateMissingProducts  *bool           `protobuf:"varint,10,opt,name=create_missing_products,json=createMissingProducts,proto3,oneof" json:"create_missing_products,omitempty"`
+	AttributeToggles       map[string]bool `protobuf:"bytes,11,rep,name=attribute_toggles,json=attributeToggles,proto3" json:"attribute_toggles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	OrderForwardingEnabled *bool           `protobuf:"varint,12,opt,name=order_forwarding_enabled,json=orderForwardingEnabled,proto3,oneof" json:"order_forwarding_enabled,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *UpsertConnectionRequest) Reset() {
@@ -358,21 +359,29 @@ func (x *UpsertConnectionRequest) GetAttributeToggles() map[string]bool {
 	return nil
 }
 
+func (x *UpsertConnectionRequest) GetOrderForwardingEnabled() bool {
+	if x != nil && x.OrderForwardingEnabled != nil {
+		return *x.OrderForwardingEnabled
+	}
+	return false
+}
+
 type Connection struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	SourceShopId          string                 `protobuf:"bytes,3,opt,name=source_shop_id,json=sourceShopId,proto3" json:"source_shop_id,omitempty"`
-	DestinationShopIds    []string               `protobuf:"bytes,4,rep,name=destination_shop_ids,json=destinationShopIds,proto3" json:"destination_shop_ids,omitempty"`
-	Enabled               bool                   `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	InventorySyncEnabled  bool                   `protobuf:"varint,6,opt,name=inventory_sync_enabled,json=inventorySyncEnabled,proto3" json:"inventory_sync_enabled,omitempty"`
-	ProductSyncEnabled    bool                   `protobuf:"varint,7,opt,name=product_sync_enabled,json=productSyncEnabled,proto3" json:"product_sync_enabled,omitempty"`
-	InventoryDirection    string                 `protobuf:"bytes,8,opt,name=inventory_direction,json=inventoryDirection,proto3" json:"inventory_direction,omitempty"`
-	MatchByBarcode        bool                   `protobuf:"varint,9,opt,name=match_by_barcode,json=matchByBarcode,proto3" json:"match_by_barcode,omitempty"`
-	CreateMissingProducts bool                   `protobuf:"varint,10,opt,name=create_missing_products,json=createMissingProducts,proto3" json:"create_missing_products,omitempty"`
-	AttributeToggles      map[string]bool        `protobuf:"bytes,11,rep,name=attribute_toggles,json=attributeToggles,proto3" json:"attribute_toggles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	Id                     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	SourceShopId           string                 `protobuf:"bytes,3,opt,name=source_shop_id,json=sourceShopId,proto3" json:"source_shop_id,omitempty"`
+	DestinationShopIds     []string               `protobuf:"bytes,4,rep,name=destination_shop_ids,json=destinationShopIds,proto3" json:"destination_shop_ids,omitempty"`
+	Enabled                bool                   `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	InventorySyncEnabled   bool                   `protobuf:"varint,6,opt,name=inventory_sync_enabled,json=inventorySyncEnabled,proto3" json:"inventory_sync_enabled,omitempty"`
+	ProductSyncEnabled     bool                   `protobuf:"varint,7,opt,name=product_sync_enabled,json=productSyncEnabled,proto3" json:"product_sync_enabled,omitempty"`
+	InventoryDirection     string                 `protobuf:"bytes,8,opt,name=inventory_direction,json=inventoryDirection,proto3" json:"inventory_direction,omitempty"`
+	MatchByBarcode         bool                   `protobuf:"varint,9,opt,name=match_by_barcode,json=matchByBarcode,proto3" json:"match_by_barcode,omitempty"`
+	CreateMissingProducts  bool                   `protobuf:"varint,10,opt,name=create_missing_products,json=createMissingProducts,proto3" json:"create_missing_products,omitempty"`
+	AttributeToggles       map[string]bool        `protobuf:"bytes,11,rep,name=attribute_toggles,json=attributeToggles,proto3" json:"attribute_toggles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	OrderForwardingEnabled bool                   `protobuf:"varint,12,opt,name=order_forwarding_enabled,json=orderForwardingEnabled,proto3" json:"order_forwarding_enabled,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Connection) Reset() {
@@ -480,6 +489,13 @@ func (x *Connection) GetAttributeToggles() map[string]bool {
 		return x.AttributeToggles
 	}
 	return nil
+}
+
+func (x *Connection) GetOrderForwardingEnabled() bool {
+	if x != nil {
+		return x.OrderForwardingEnabled
+	}
+	return false
 }
 
 type ListAttributeTogglesRequest struct {
@@ -1515,6 +1531,666 @@ func (x *SyncProductsResponse) GetNotes() string {
 	return ""
 }
 
+type ListOrderMappingsRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ConnectionId      string                 `protobuf:"bytes,1,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	DestinationShopId string                 `protobuf:"bytes,2,opt,name=destination_shop_id,json=destinationShopId,proto3" json:"destination_shop_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ListOrderMappingsRequest) Reset() {
+	*x = ListOrderMappingsRequest{}
+	mi := &file_syncio_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrderMappingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrderMappingsRequest) ProtoMessage() {}
+
+func (x *ListOrderMappingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrderMappingsRequest.ProtoReflect.Descriptor instead.
+func (*ListOrderMappingsRequest) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListOrderMappingsRequest) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+func (x *ListOrderMappingsRequest) GetDestinationShopId() string {
+	if x != nil {
+		return x.DestinationShopId
+	}
+	return ""
+}
+
+type OrderMapping struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ConnectionId        string                 `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	DestinationShopId   string                 `protobuf:"bytes,3,opt,name=destination_shop_id,json=destinationShopId,proto3" json:"destination_shop_id,omitempty"`
+	DestOrderId         string                 `protobuf:"bytes,4,opt,name=dest_order_id,json=destOrderId,proto3" json:"dest_order_id,omitempty"`
+	DestOrderName       string                 `protobuf:"bytes,5,opt,name=dest_order_name,json=destOrderName,proto3" json:"dest_order_name,omitempty"`
+	SourceOrderId       string                 `protobuf:"bytes,6,opt,name=source_order_id,json=sourceOrderId,proto3" json:"source_order_id,omitempty"`
+	SourceOrderName     string                 `protobuf:"bytes,7,opt,name=source_order_name,json=sourceOrderName,proto3" json:"source_order_name,omitempty"`
+	LastTrackingNumber  string                 `protobuf:"bytes,8,opt,name=last_tracking_number,json=lastTrackingNumber,proto3" json:"last_tracking_number,omitempty"`
+	LastFulfillmentSync string                 `protobuf:"bytes,9,opt,name=last_fulfillment_sync,json=lastFulfillmentSync,proto3" json:"last_fulfillment_sync,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *OrderMapping) Reset() {
+	*x = OrderMapping{}
+	mi := &file_syncio_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OrderMapping) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrderMapping) ProtoMessage() {}
+
+func (x *OrderMapping) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrderMapping.ProtoReflect.Descriptor instead.
+func (*OrderMapping) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *OrderMapping) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetDestinationShopId() string {
+	if x != nil {
+		return x.DestinationShopId
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetDestOrderId() string {
+	if x != nil {
+		return x.DestOrderId
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetDestOrderName() string {
+	if x != nil {
+		return x.DestOrderName
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetSourceOrderId() string {
+	if x != nil {
+		return x.SourceOrderId
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetSourceOrderName() string {
+	if x != nil {
+		return x.SourceOrderName
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetLastTrackingNumber() string {
+	if x != nil {
+		return x.LastTrackingNumber
+	}
+	return ""
+}
+
+func (x *OrderMapping) GetLastFulfillmentSync() string {
+	if x != nil {
+		return x.LastFulfillmentSync
+	}
+	return ""
+}
+
+type ListOrderMappingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mappings      []*OrderMapping        `protobuf:"bytes,1,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOrderMappingsResponse) Reset() {
+	*x = ListOrderMappingsResponse{}
+	mi := &file_syncio_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrderMappingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrderMappingsResponse) ProtoMessage() {}
+
+func (x *ListOrderMappingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrderMappingsResponse.ProtoReflect.Descriptor instead.
+func (*ListOrderMappingsResponse) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListOrderMappingsResponse) GetMappings() []*OrderMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+type ForwardOrdersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ConnectionId  string                 `protobuf:"bytes,1,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	DryRun        bool                   `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForwardOrdersRequest) Reset() {
+	*x = ForwardOrdersRequest{}
+	mi := &file_syncio_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForwardOrdersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForwardOrdersRequest) ProtoMessage() {}
+
+func (x *ForwardOrdersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForwardOrdersRequest.ProtoReflect.Descriptor instead.
+func (*ForwardOrdersRequest) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ForwardOrdersRequest) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+func (x *ForwardOrdersRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+type OrderForwardAction struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DestinationShopId string                 `protobuf:"bytes,1,opt,name=destination_shop_id,json=destinationShopId,proto3" json:"destination_shop_id,omitempty"`
+	DestOrderId       string                 `protobuf:"bytes,2,opt,name=dest_order_id,json=destOrderId,proto3" json:"dest_order_id,omitempty"`
+	DestOrderName     string                 `protobuf:"bytes,3,opt,name=dest_order_name,json=destOrderName,proto3" json:"dest_order_name,omitempty"`
+	SourceOrderId     string                 `protobuf:"bytes,4,opt,name=source_order_id,json=sourceOrderId,proto3" json:"source_order_id,omitempty"`
+	SourceOrderName   string                 `protobuf:"bytes,5,opt,name=source_order_name,json=sourceOrderName,proto3" json:"source_order_name,omitempty"`
+	Action            string                 `protobuf:"bytes,6,opt,name=action,proto3" json:"action,omitempty"` // forward | skip | blocked
+	Reason            string                 `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *OrderForwardAction) Reset() {
+	*x = OrderForwardAction{}
+	mi := &file_syncio_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OrderForwardAction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrderForwardAction) ProtoMessage() {}
+
+func (x *OrderForwardAction) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrderForwardAction.ProtoReflect.Descriptor instead.
+func (*OrderForwardAction) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *OrderForwardAction) GetDestinationShopId() string {
+	if x != nil {
+		return x.DestinationShopId
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetDestOrderId() string {
+	if x != nil {
+		return x.DestOrderId
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetDestOrderName() string {
+	if x != nil {
+		return x.DestOrderName
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetSourceOrderId() string {
+	if x != nil {
+		return x.SourceOrderId
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetSourceOrderName() string {
+	if x != nil {
+		return x.SourceOrderName
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *OrderForwardAction) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type ForwardOrdersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Planned       int32                  `protobuf:"varint,1,opt,name=planned,proto3" json:"planned,omitempty"`
+	Applied       int32                  `protobuf:"varint,2,opt,name=applied,proto3" json:"applied,omitempty"`
+	Skipped       int32                  `protobuf:"varint,3,opt,name=skipped,proto3" json:"skipped,omitempty"`
+	Blocked       int32                  `protobuf:"varint,4,opt,name=blocked,proto3" json:"blocked,omitempty"`
+	Actions       []*OrderForwardAction  `protobuf:"bytes,5,rep,name=actions,proto3" json:"actions,omitempty"`
+	Notes         string                 `protobuf:"bytes,6,opt,name=notes,proto3" json:"notes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForwardOrdersResponse) Reset() {
+	*x = ForwardOrdersResponse{}
+	mi := &file_syncio_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForwardOrdersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForwardOrdersResponse) ProtoMessage() {}
+
+func (x *ForwardOrdersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForwardOrdersResponse.ProtoReflect.Descriptor instead.
+func (*ForwardOrdersResponse) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ForwardOrdersResponse) GetPlanned() int32 {
+	if x != nil {
+		return x.Planned
+	}
+	return 0
+}
+
+func (x *ForwardOrdersResponse) GetApplied() int32 {
+	if x != nil {
+		return x.Applied
+	}
+	return 0
+}
+
+func (x *ForwardOrdersResponse) GetSkipped() int32 {
+	if x != nil {
+		return x.Skipped
+	}
+	return 0
+}
+
+func (x *ForwardOrdersResponse) GetBlocked() int32 {
+	if x != nil {
+		return x.Blocked
+	}
+	return 0
+}
+
+func (x *ForwardOrdersResponse) GetActions() []*OrderForwardAction {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+func (x *ForwardOrdersResponse) GetNotes() string {
+	if x != nil {
+		return x.Notes
+	}
+	return ""
+}
+
+type SyncFulfillmentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ConnectionId  string                 `protobuf:"bytes,1,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	DryRun        bool                   `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncFulfillmentsRequest) Reset() {
+	*x = SyncFulfillmentsRequest{}
+	mi := &file_syncio_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncFulfillmentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncFulfillmentsRequest) ProtoMessage() {}
+
+func (x *SyncFulfillmentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncFulfillmentsRequest.ProtoReflect.Descriptor instead.
+func (*SyncFulfillmentsRequest) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SyncFulfillmentsRequest) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+func (x *SyncFulfillmentsRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+type FulfillmentSyncAction struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DestinationShopId string                 `protobuf:"bytes,1,opt,name=destination_shop_id,json=destinationShopId,proto3" json:"destination_shop_id,omitempty"`
+	DestOrderId       string                 `protobuf:"bytes,2,opt,name=dest_order_id,json=destOrderId,proto3" json:"dest_order_id,omitempty"`
+	SourceOrderId     string                 `protobuf:"bytes,3,opt,name=source_order_id,json=sourceOrderId,proto3" json:"source_order_id,omitempty"`
+	TrackingNumber    string                 `protobuf:"bytes,4,opt,name=tracking_number,json=trackingNumber,proto3" json:"tracking_number,omitempty"`
+	TrackingCompany   string                 `protobuf:"bytes,5,opt,name=tracking_company,json=trackingCompany,proto3" json:"tracking_company,omitempty"`
+	Action            string                 `protobuf:"bytes,6,opt,name=action,proto3" json:"action,omitempty"` // sync | skip | blocked
+	Reason            string                 `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *FulfillmentSyncAction) Reset() {
+	*x = FulfillmentSyncAction{}
+	mi := &file_syncio_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FulfillmentSyncAction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FulfillmentSyncAction) ProtoMessage() {}
+
+func (x *FulfillmentSyncAction) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FulfillmentSyncAction.ProtoReflect.Descriptor instead.
+func (*FulfillmentSyncAction) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *FulfillmentSyncAction) GetDestinationShopId() string {
+	if x != nil {
+		return x.DestinationShopId
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetDestOrderId() string {
+	if x != nil {
+		return x.DestOrderId
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetSourceOrderId() string {
+	if x != nil {
+		return x.SourceOrderId
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetTrackingNumber() string {
+	if x != nil {
+		return x.TrackingNumber
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetTrackingCompany() string {
+	if x != nil {
+		return x.TrackingCompany
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *FulfillmentSyncAction) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type SyncFulfillmentsResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Planned       int32                    `protobuf:"varint,1,opt,name=planned,proto3" json:"planned,omitempty"`
+	Applied       int32                    `protobuf:"varint,2,opt,name=applied,proto3" json:"applied,omitempty"`
+	Skipped       int32                    `protobuf:"varint,3,opt,name=skipped,proto3" json:"skipped,omitempty"`
+	Blocked       int32                    `protobuf:"varint,4,opt,name=blocked,proto3" json:"blocked,omitempty"`
+	Actions       []*FulfillmentSyncAction `protobuf:"bytes,5,rep,name=actions,proto3" json:"actions,omitempty"`
+	Notes         string                   `protobuf:"bytes,6,opt,name=notes,proto3" json:"notes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncFulfillmentsResponse) Reset() {
+	*x = SyncFulfillmentsResponse{}
+	mi := &file_syncio_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncFulfillmentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncFulfillmentsResponse) ProtoMessage() {}
+
+func (x *SyncFulfillmentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_syncio_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncFulfillmentsResponse.ProtoReflect.Descriptor instead.
+func (*SyncFulfillmentsResponse) Descriptor() ([]byte, []int) {
+	return file_syncio_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *SyncFulfillmentsResponse) GetPlanned() int32 {
+	if x != nil {
+		return x.Planned
+	}
+	return 0
+}
+
+func (x *SyncFulfillmentsResponse) GetApplied() int32 {
+	if x != nil {
+		return x.Applied
+	}
+	return 0
+}
+
+func (x *SyncFulfillmentsResponse) GetSkipped() int32 {
+	if x != nil {
+		return x.Skipped
+	}
+	return 0
+}
+
+func (x *SyncFulfillmentsResponse) GetBlocked() int32 {
+	if x != nil {
+		return x.Blocked
+	}
+	return 0
+}
+
+func (x *SyncFulfillmentsResponse) GetActions() []*FulfillmentSyncAction {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+func (x *SyncFulfillmentsResponse) GetNotes() string {
+	if x != nil {
+		return x.Notes
+	}
+	return ""
+}
+
 var File_syncio_proto protoreflect.FileDescriptor
 
 const file_syncio_proto_rawDesc = "" +
@@ -1528,7 +2204,7 @@ const file_syncio_proto_rawDesc = "" +
 	"\x17DeleteConnectionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"*\n" +
 	"\x18DeleteConnectionResponse\x12\x0e\n" +
-	"\x02ok\x18\x01 \x01(\bR\x02ok\"\xee\x05\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\"\xca\x06\n" +
 	"\x17UpsertConnectionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12$\n" +
@@ -1541,7 +2217,8 @@ const file_syncio_proto_rawDesc = "" +
 	"\x10match_by_barcode\x18\t \x01(\bH\x03R\x0ematchByBarcode\x88\x01\x01\x12;\n" +
 	"\x17create_missing_products\x18\n" +
 	" \x01(\bH\x04R\x15createMissingProducts\x88\x01\x01\x12s\n" +
-	"\x11attribute_toggles\x18\v \x03(\v2F.plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntryR\x10attributeToggles\x1aC\n" +
+	"\x11attribute_toggles\x18\v \x03(\v2F.plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntryR\x10attributeToggles\x12=\n" +
+	"\x18order_forwarding_enabled\x18\f \x01(\bH\x05R\x16orderForwardingEnabled\x88\x01\x01\x1aC\n" +
 	"\x15AttributeTogglesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01B\n" +
@@ -1550,7 +2227,8 @@ const file_syncio_proto_rawDesc = "" +
 	"\x17_inventory_sync_enabledB\x17\n" +
 	"\x15_product_sync_enabledB\x13\n" +
 	"\x11_match_by_barcodeB\x1a\n" +
-	"\x18_create_missing_products\"\xca\x04\n" +
+	"\x18_create_missing_productsB\x1b\n" +
+	"\x19_order_forwarding_enabled\"\x84\x05\n" +
 	"\n" +
 	"Connection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1564,7 +2242,8 @@ const file_syncio_proto_rawDesc = "" +
 	"\x10match_by_barcode\x18\t \x01(\bR\x0ematchByBarcode\x126\n" +
 	"\x17create_missing_products\x18\n" +
 	" \x01(\bR\x15createMissingProducts\x12f\n" +
-	"\x11attribute_toggles\x18\v \x03(\v29.plugins.govel_syncio.v1.Connection.AttributeTogglesEntryR\x10attributeToggles\x1aC\n" +
+	"\x11attribute_toggles\x18\v \x03(\v29.plugins.govel_syncio.v1.Connection.AttributeTogglesEntryR\x10attributeToggles\x128\n" +
+	"\x18order_forwarding_enabled\x18\f \x01(\bR\x16orderForwardingEnabled\x1aC\n" +
 	"\x15AttributeTogglesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"B\n" +
@@ -1653,8 +2332,58 @@ const file_syncio_proto_rawDesc = "" +
 	"\askipped\x18\x03 \x01(\x05R\askipped\x12\x18\n" +
 	"\ablocked\x18\x04 \x01(\x05R\ablocked\x12D\n" +
 	"\aactions\x18\x05 \x03(\v2*.plugins.govel_syncio.v1.ProductSyncActionR\aactions\x12\x14\n" +
-	"\x05notes\x18\x06 \x01(\tR\x05notes2\xba\n" +
-	"\n" +
+	"\x05notes\x18\x06 \x01(\tR\x05notes\"o\n" +
+	"\x18ListOrderMappingsRequest\x12#\n" +
+	"\rconnection_id\x18\x01 \x01(\tR\fconnectionId\x12.\n" +
+	"\x13destination_shop_id\x18\x02 \x01(\tR\x11destinationShopId\"\xf9\x02\n" +
+	"\fOrderMapping\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
+	"\rconnection_id\x18\x02 \x01(\tR\fconnectionId\x12.\n" +
+	"\x13destination_shop_id\x18\x03 \x01(\tR\x11destinationShopId\x12\"\n" +
+	"\rdest_order_id\x18\x04 \x01(\tR\vdestOrderId\x12&\n" +
+	"\x0fdest_order_name\x18\x05 \x01(\tR\rdestOrderName\x12&\n" +
+	"\x0fsource_order_id\x18\x06 \x01(\tR\rsourceOrderId\x12*\n" +
+	"\x11source_order_name\x18\a \x01(\tR\x0fsourceOrderName\x120\n" +
+	"\x14last_tracking_number\x18\b \x01(\tR\x12lastTrackingNumber\x122\n" +
+	"\x15last_fulfillment_sync\x18\t \x01(\tR\x13lastFulfillmentSync\"^\n" +
+	"\x19ListOrderMappingsResponse\x12A\n" +
+	"\bmappings\x18\x01 \x03(\v2%.plugins.govel_syncio.v1.OrderMappingR\bmappings\"T\n" +
+	"\x14ForwardOrdersRequest\x12#\n" +
+	"\rconnection_id\x18\x01 \x01(\tR\fconnectionId\x12\x17\n" +
+	"\adry_run\x18\x02 \x01(\bR\x06dryRun\"\x94\x02\n" +
+	"\x12OrderForwardAction\x12.\n" +
+	"\x13destination_shop_id\x18\x01 \x01(\tR\x11destinationShopId\x12\"\n" +
+	"\rdest_order_id\x18\x02 \x01(\tR\vdestOrderId\x12&\n" +
+	"\x0fdest_order_name\x18\x03 \x01(\tR\rdestOrderName\x12&\n" +
+	"\x0fsource_order_id\x18\x04 \x01(\tR\rsourceOrderId\x12*\n" +
+	"\x11source_order_name\x18\x05 \x01(\tR\x0fsourceOrderName\x12\x16\n" +
+	"\x06action\x18\x06 \x01(\tR\x06action\x12\x16\n" +
+	"\x06reason\x18\a \x01(\tR\x06reason\"\xdc\x01\n" +
+	"\x15ForwardOrdersResponse\x12\x18\n" +
+	"\aplanned\x18\x01 \x01(\x05R\aplanned\x12\x18\n" +
+	"\aapplied\x18\x02 \x01(\x05R\aapplied\x12\x18\n" +
+	"\askipped\x18\x03 \x01(\x05R\askipped\x12\x18\n" +
+	"\ablocked\x18\x04 \x01(\x05R\ablocked\x12E\n" +
+	"\aactions\x18\x05 \x03(\v2+.plugins.govel_syncio.v1.OrderForwardActionR\aactions\x12\x14\n" +
+	"\x05notes\x18\x06 \x01(\tR\x05notes\"W\n" +
+	"\x17SyncFulfillmentsRequest\x12#\n" +
+	"\rconnection_id\x18\x01 \x01(\tR\fconnectionId\x12\x17\n" +
+	"\adry_run\x18\x02 \x01(\bR\x06dryRun\"\x97\x02\n" +
+	"\x15FulfillmentSyncAction\x12.\n" +
+	"\x13destination_shop_id\x18\x01 \x01(\tR\x11destinationShopId\x12\"\n" +
+	"\rdest_order_id\x18\x02 \x01(\tR\vdestOrderId\x12&\n" +
+	"\x0fsource_order_id\x18\x03 \x01(\tR\rsourceOrderId\x12'\n" +
+	"\x0ftracking_number\x18\x04 \x01(\tR\x0etrackingNumber\x12)\n" +
+	"\x10tracking_company\x18\x05 \x01(\tR\x0ftrackingCompany\x12\x16\n" +
+	"\x06action\x18\x06 \x01(\tR\x06action\x12\x16\n" +
+	"\x06reason\x18\a \x01(\tR\x06reason\"\xe2\x01\n" +
+	"\x18SyncFulfillmentsResponse\x12\x18\n" +
+	"\aplanned\x18\x01 \x01(\x05R\aplanned\x12\x18\n" +
+	"\aapplied\x18\x02 \x01(\x05R\aapplied\x12\x18\n" +
+	"\askipped\x18\x03 \x01(\x05R\askipped\x12\x18\n" +
+	"\ablocked\x18\x04 \x01(\x05R\ablocked\x12H\n" +
+	"\aactions\x18\x05 \x03(\v2..plugins.govel_syncio.v1.FulfillmentSyncActionR\aactions\x12\x14\n" +
+	"\x05notes\x18\x06 \x01(\tR\x05notes2\x9f\r\n" +
 	"\rSyncioService\x12t\n" +
 	"\x0fListConnections\x12/.plugins.govel_syncio.v1.ListConnectionsRequest\x1a0.plugins.govel_syncio.v1.ListConnectionsResponse\x12i\n" +
 	"\x10UpsertConnection\x120.plugins.govel_syncio.v1.UpsertConnectionRequest\x1a#.plugins.govel_syncio.v1.Connection\x12w\n" +
@@ -1665,7 +2394,10 @@ const file_syncio_proto_rawDesc = "" +
 	"\x13ListProductMappings\x123.plugins.govel_syncio.v1.ListProductMappingsRequest\x1a4.plugins.govel_syncio.v1.ListProductMappingsResponse\x12w\n" +
 	"\x10MapProductsBySku\x120.plugins.govel_syncio.v1.MapProductsBySkuRequest\x1a1.plugins.govel_syncio.v1.MapProductsBySkuResponse\x12n\n" +
 	"\rSyncInventory\x12-.plugins.govel_syncio.v1.SyncInventoryRequest\x1a..plugins.govel_syncio.v1.SyncInventoryResponse\x12k\n" +
-	"\fSyncProducts\x12,.plugins.govel_syncio.v1.SyncProductsRequest\x1a-.plugins.govel_syncio.v1.SyncProductsResponse\x12\x86\x01\n" +
+	"\fSyncProducts\x12,.plugins.govel_syncio.v1.SyncProductsRequest\x1a-.plugins.govel_syncio.v1.SyncProductsResponse\x12n\n" +
+	"\rForwardOrders\x12-.plugins.govel_syncio.v1.ForwardOrdersRequest\x1a..plugins.govel_syncio.v1.ForwardOrdersResponse\x12w\n" +
+	"\x10SyncFulfillments\x120.plugins.govel_syncio.v1.SyncFulfillmentsRequest\x1a1.plugins.govel_syncio.v1.SyncFulfillmentsResponse\x12z\n" +
+	"\x11ListOrderMappings\x121.plugins.govel_syncio.v1.ListOrderMappingsRequest\x1a2.plugins.govel_syncio.v1.ListOrderMappingsResponse\x12\x86\x01\n" +
 	"\x15ListDefaultAttributes\x125.plugins.govel_syncio.v1.ListDefaultAttributesRequest\x1a6.plugins.govel_syncio.v1.ListDefaultAttributesResponseB1Z/github.com/Digger-GmbH/govel-syncio/proto;protob\x06proto3"
 
 var (
@@ -1680,7 +2412,7 @@ func file_syncio_proto_rawDescGZIP() []byte {
 	return file_syncio_proto_rawDescData
 }
 
-var file_syncio_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_syncio_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_syncio_proto_goTypes = []any{
 	(*ListConnectionsRequest)(nil),        // 0: plugins.govel_syncio.v1.ListConnectionsRequest
 	(*ListConnectionsResponse)(nil),       // 1: plugins.govel_syncio.v1.ListConnectionsResponse
@@ -1705,48 +2437,66 @@ var file_syncio_proto_goTypes = []any{
 	(*SyncProductsRequest)(nil),           // 20: plugins.govel_syncio.v1.SyncProductsRequest
 	(*ProductSyncAction)(nil),             // 21: plugins.govel_syncio.v1.ProductSyncAction
 	(*SyncProductsResponse)(nil),          // 22: plugins.govel_syncio.v1.SyncProductsResponse
-	nil,                                   // 23: plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntry
-	nil,                                   // 24: plugins.govel_syncio.v1.Connection.AttributeTogglesEntry
-	nil,                                   // 25: plugins.govel_syncio.v1.ListAttributeTogglesResponse.TogglesEntry
-	nil,                                   // 26: plugins.govel_syncio.v1.SetAttributeTogglesRequest.TogglesEntry
+	(*ListOrderMappingsRequest)(nil),      // 23: plugins.govel_syncio.v1.ListOrderMappingsRequest
+	(*OrderMapping)(nil),                  // 24: plugins.govel_syncio.v1.OrderMapping
+	(*ListOrderMappingsResponse)(nil),     // 25: plugins.govel_syncio.v1.ListOrderMappingsResponse
+	(*ForwardOrdersRequest)(nil),          // 26: plugins.govel_syncio.v1.ForwardOrdersRequest
+	(*OrderForwardAction)(nil),            // 27: plugins.govel_syncio.v1.OrderForwardAction
+	(*ForwardOrdersResponse)(nil),         // 28: plugins.govel_syncio.v1.ForwardOrdersResponse
+	(*SyncFulfillmentsRequest)(nil),       // 29: plugins.govel_syncio.v1.SyncFulfillmentsRequest
+	(*FulfillmentSyncAction)(nil),         // 30: plugins.govel_syncio.v1.FulfillmentSyncAction
+	(*SyncFulfillmentsResponse)(nil),      // 31: plugins.govel_syncio.v1.SyncFulfillmentsResponse
+	nil,                                   // 32: plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntry
+	nil,                                   // 33: plugins.govel_syncio.v1.Connection.AttributeTogglesEntry
+	nil,                                   // 34: plugins.govel_syncio.v1.ListAttributeTogglesResponse.TogglesEntry
+	nil,                                   // 35: plugins.govel_syncio.v1.SetAttributeTogglesRequest.TogglesEntry
 }
 var file_syncio_proto_depIdxs = []int32{
 	6,  // 0: plugins.govel_syncio.v1.ListConnectionsResponse.connections:type_name -> plugins.govel_syncio.v1.Connection
-	23, // 1: plugins.govel_syncio.v1.UpsertConnectionRequest.attribute_toggles:type_name -> plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntry
-	24, // 2: plugins.govel_syncio.v1.Connection.attribute_toggles:type_name -> plugins.govel_syncio.v1.Connection.AttributeTogglesEntry
-	25, // 3: plugins.govel_syncio.v1.ListAttributeTogglesResponse.toggles:type_name -> plugins.govel_syncio.v1.ListAttributeTogglesResponse.TogglesEntry
-	26, // 4: plugins.govel_syncio.v1.SetAttributeTogglesRequest.toggles:type_name -> plugins.govel_syncio.v1.SetAttributeTogglesRequest.TogglesEntry
+	32, // 1: plugins.govel_syncio.v1.UpsertConnectionRequest.attribute_toggles:type_name -> plugins.govel_syncio.v1.UpsertConnectionRequest.AttributeTogglesEntry
+	33, // 2: plugins.govel_syncio.v1.Connection.attribute_toggles:type_name -> plugins.govel_syncio.v1.Connection.AttributeTogglesEntry
+	34, // 3: plugins.govel_syncio.v1.ListAttributeTogglesResponse.toggles:type_name -> plugins.govel_syncio.v1.ListAttributeTogglesResponse.TogglesEntry
+	35, // 4: plugins.govel_syncio.v1.SetAttributeTogglesRequest.toggles:type_name -> plugins.govel_syncio.v1.SetAttributeTogglesRequest.TogglesEntry
 	13, // 5: plugins.govel_syncio.v1.ListProductMappingsResponse.mappings:type_name -> plugins.govel_syncio.v1.ProductMapping
 	13, // 6: plugins.govel_syncio.v1.MapProductsBySkuResponse.mappings:type_name -> plugins.govel_syncio.v1.ProductMapping
 	18, // 7: plugins.govel_syncio.v1.SyncInventoryResponse.deltas:type_name -> plugins.govel_syncio.v1.InventoryDelta
 	21, // 8: plugins.govel_syncio.v1.SyncProductsResponse.actions:type_name -> plugins.govel_syncio.v1.ProductSyncAction
-	0,  // 9: plugins.govel_syncio.v1.SyncioService.ListConnections:input_type -> plugins.govel_syncio.v1.ListConnectionsRequest
-	5,  // 10: plugins.govel_syncio.v1.SyncioService.UpsertConnection:input_type -> plugins.govel_syncio.v1.UpsertConnectionRequest
-	3,  // 11: plugins.govel_syncio.v1.SyncioService.DeleteConnection:input_type -> plugins.govel_syncio.v1.DeleteConnectionRequest
-	2,  // 12: plugins.govel_syncio.v1.SyncioService.GetConnection:input_type -> plugins.govel_syncio.v1.GetConnectionRequest
-	7,  // 13: plugins.govel_syncio.v1.SyncioService.ListAttributeToggles:input_type -> plugins.govel_syncio.v1.ListAttributeTogglesRequest
-	9,  // 14: plugins.govel_syncio.v1.SyncioService.SetAttributeToggles:input_type -> plugins.govel_syncio.v1.SetAttributeTogglesRequest
-	12, // 15: plugins.govel_syncio.v1.SyncioService.ListProductMappings:input_type -> plugins.govel_syncio.v1.ListProductMappingsRequest
-	15, // 16: plugins.govel_syncio.v1.SyncioService.MapProductsBySku:input_type -> plugins.govel_syncio.v1.MapProductsBySkuRequest
-	17, // 17: plugins.govel_syncio.v1.SyncioService.SyncInventory:input_type -> plugins.govel_syncio.v1.SyncInventoryRequest
-	20, // 18: plugins.govel_syncio.v1.SyncioService.SyncProducts:input_type -> plugins.govel_syncio.v1.SyncProductsRequest
-	10, // 19: plugins.govel_syncio.v1.SyncioService.ListDefaultAttributes:input_type -> plugins.govel_syncio.v1.ListDefaultAttributesRequest
-	1,  // 20: plugins.govel_syncio.v1.SyncioService.ListConnections:output_type -> plugins.govel_syncio.v1.ListConnectionsResponse
-	6,  // 21: plugins.govel_syncio.v1.SyncioService.UpsertConnection:output_type -> plugins.govel_syncio.v1.Connection
-	4,  // 22: plugins.govel_syncio.v1.SyncioService.DeleteConnection:output_type -> plugins.govel_syncio.v1.DeleteConnectionResponse
-	6,  // 23: plugins.govel_syncio.v1.SyncioService.GetConnection:output_type -> plugins.govel_syncio.v1.Connection
-	8,  // 24: plugins.govel_syncio.v1.SyncioService.ListAttributeToggles:output_type -> plugins.govel_syncio.v1.ListAttributeTogglesResponse
-	8,  // 25: plugins.govel_syncio.v1.SyncioService.SetAttributeToggles:output_type -> plugins.govel_syncio.v1.ListAttributeTogglesResponse
-	14, // 26: plugins.govel_syncio.v1.SyncioService.ListProductMappings:output_type -> plugins.govel_syncio.v1.ListProductMappingsResponse
-	16, // 27: plugins.govel_syncio.v1.SyncioService.MapProductsBySku:output_type -> plugins.govel_syncio.v1.MapProductsBySkuResponse
-	19, // 28: plugins.govel_syncio.v1.SyncioService.SyncInventory:output_type -> plugins.govel_syncio.v1.SyncInventoryResponse
-	22, // 29: plugins.govel_syncio.v1.SyncioService.SyncProducts:output_type -> plugins.govel_syncio.v1.SyncProductsResponse
-	11, // 30: plugins.govel_syncio.v1.SyncioService.ListDefaultAttributes:output_type -> plugins.govel_syncio.v1.ListDefaultAttributesResponse
-	20, // [20:31] is the sub-list for method output_type
-	9,  // [9:20] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	24, // 9: plugins.govel_syncio.v1.ListOrderMappingsResponse.mappings:type_name -> plugins.govel_syncio.v1.OrderMapping
+	27, // 10: plugins.govel_syncio.v1.ForwardOrdersResponse.actions:type_name -> plugins.govel_syncio.v1.OrderForwardAction
+	30, // 11: plugins.govel_syncio.v1.SyncFulfillmentsResponse.actions:type_name -> plugins.govel_syncio.v1.FulfillmentSyncAction
+	0,  // 12: plugins.govel_syncio.v1.SyncioService.ListConnections:input_type -> plugins.govel_syncio.v1.ListConnectionsRequest
+	5,  // 13: plugins.govel_syncio.v1.SyncioService.UpsertConnection:input_type -> plugins.govel_syncio.v1.UpsertConnectionRequest
+	3,  // 14: plugins.govel_syncio.v1.SyncioService.DeleteConnection:input_type -> plugins.govel_syncio.v1.DeleteConnectionRequest
+	2,  // 15: plugins.govel_syncio.v1.SyncioService.GetConnection:input_type -> plugins.govel_syncio.v1.GetConnectionRequest
+	7,  // 16: plugins.govel_syncio.v1.SyncioService.ListAttributeToggles:input_type -> plugins.govel_syncio.v1.ListAttributeTogglesRequest
+	9,  // 17: plugins.govel_syncio.v1.SyncioService.SetAttributeToggles:input_type -> plugins.govel_syncio.v1.SetAttributeTogglesRequest
+	12, // 18: plugins.govel_syncio.v1.SyncioService.ListProductMappings:input_type -> plugins.govel_syncio.v1.ListProductMappingsRequest
+	15, // 19: plugins.govel_syncio.v1.SyncioService.MapProductsBySku:input_type -> plugins.govel_syncio.v1.MapProductsBySkuRequest
+	17, // 20: plugins.govel_syncio.v1.SyncioService.SyncInventory:input_type -> plugins.govel_syncio.v1.SyncInventoryRequest
+	20, // 21: plugins.govel_syncio.v1.SyncioService.SyncProducts:input_type -> plugins.govel_syncio.v1.SyncProductsRequest
+	26, // 22: plugins.govel_syncio.v1.SyncioService.ForwardOrders:input_type -> plugins.govel_syncio.v1.ForwardOrdersRequest
+	29, // 23: plugins.govel_syncio.v1.SyncioService.SyncFulfillments:input_type -> plugins.govel_syncio.v1.SyncFulfillmentsRequest
+	23, // 24: plugins.govel_syncio.v1.SyncioService.ListOrderMappings:input_type -> plugins.govel_syncio.v1.ListOrderMappingsRequest
+	10, // 25: plugins.govel_syncio.v1.SyncioService.ListDefaultAttributes:input_type -> plugins.govel_syncio.v1.ListDefaultAttributesRequest
+	1,  // 26: plugins.govel_syncio.v1.SyncioService.ListConnections:output_type -> plugins.govel_syncio.v1.ListConnectionsResponse
+	6,  // 27: plugins.govel_syncio.v1.SyncioService.UpsertConnection:output_type -> plugins.govel_syncio.v1.Connection
+	4,  // 28: plugins.govel_syncio.v1.SyncioService.DeleteConnection:output_type -> plugins.govel_syncio.v1.DeleteConnectionResponse
+	6,  // 29: plugins.govel_syncio.v1.SyncioService.GetConnection:output_type -> plugins.govel_syncio.v1.Connection
+	8,  // 30: plugins.govel_syncio.v1.SyncioService.ListAttributeToggles:output_type -> plugins.govel_syncio.v1.ListAttributeTogglesResponse
+	8,  // 31: plugins.govel_syncio.v1.SyncioService.SetAttributeToggles:output_type -> plugins.govel_syncio.v1.ListAttributeTogglesResponse
+	14, // 32: plugins.govel_syncio.v1.SyncioService.ListProductMappings:output_type -> plugins.govel_syncio.v1.ListProductMappingsResponse
+	16, // 33: plugins.govel_syncio.v1.SyncioService.MapProductsBySku:output_type -> plugins.govel_syncio.v1.MapProductsBySkuResponse
+	19, // 34: plugins.govel_syncio.v1.SyncioService.SyncInventory:output_type -> plugins.govel_syncio.v1.SyncInventoryResponse
+	22, // 35: plugins.govel_syncio.v1.SyncioService.SyncProducts:output_type -> plugins.govel_syncio.v1.SyncProductsResponse
+	28, // 36: plugins.govel_syncio.v1.SyncioService.ForwardOrders:output_type -> plugins.govel_syncio.v1.ForwardOrdersResponse
+	31, // 37: plugins.govel_syncio.v1.SyncioService.SyncFulfillments:output_type -> plugins.govel_syncio.v1.SyncFulfillmentsResponse
+	25, // 38: plugins.govel_syncio.v1.SyncioService.ListOrderMappings:output_type -> plugins.govel_syncio.v1.ListOrderMappingsResponse
+	11, // 39: plugins.govel_syncio.v1.SyncioService.ListDefaultAttributes:output_type -> plugins.govel_syncio.v1.ListDefaultAttributesResponse
+	26, // [26:40] is the sub-list for method output_type
+	12, // [12:26] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_syncio_proto_init() }
@@ -1761,7 +2511,7 @@ func file_syncio_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_syncio_proto_rawDesc), len(file_syncio_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

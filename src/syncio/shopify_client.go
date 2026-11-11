@@ -15,8 +15,10 @@ import (
 
 // Required Shopify use-cases (govel-shopify scopes catalog).
 const (
-	UseCaseInventoryWrite = "catalog.inventory_write" // write_inventory + read_inventory
-	UseCaseProductWrite   = "catalog.product_write"   // write_products + read_products
+	UseCaseInventoryWrite   = "catalog.inventory_write"   // write_inventory + read_inventory
+	UseCaseProductWrite     = "catalog.product_write"     // write_products + read_products
+	UseCaseOrdersWrite      = "orders.write"              // write_orders + read_orders
+	UseCaseFulfillmentWrite = "orders.fulfillment_write"  // merchant-managed FO write + read_orders
 )
 
 // ShopifyClient talks to govel-shopify HTTP API (not Shopify Admin directly).
@@ -91,6 +93,91 @@ type CreateVariantInput struct {
 	SKU     string
 	Price   string
 	Barcode string
+}
+
+// Order/fulfillment views from govel-shopify encode with Go default (PascalCase) field names.
+type ShopifyAddress struct {
+	Name     string `json:"Name"`
+	Company  string `json:"Company"`
+	Address1 string `json:"Address1"`
+	Address2 string `json:"Address2"`
+	City     string `json:"City"`
+	Province string `json:"Province"`
+	Country  string `json:"Country"`
+	Zip      string `json:"Zip"`
+	Phone    string `json:"Phone"`
+}
+
+type ShopifyLineItem struct {
+	ID        int64  `json:"ID"`
+	Title     string `json:"Title"`
+	SKU       string `json:"SKU"`
+	Quantity  int32  `json:"Quantity"`
+	Price     string `json:"Price"`
+	ProductID int64  `json:"ProductID"`
+	VariantID int64  `json:"VariantID"`
+}
+
+type ShopifyOrder struct {
+	GovelShopID       string            `json:"GovelShopID"`
+	ShopDomain        string            `json:"ShopDomain"`
+	ID                int64             `json:"ID"`
+	Name              string            `json:"Name"`
+	Email             string            `json:"Email"`
+	FinancialStatus   string            `json:"FinancialStatus"`
+	FulfillmentStatus string            `json:"FulfillmentStatus"`
+	Currency          string            `json:"Currency"`
+	Note              string            `json:"Note"`
+	Tags              string            `json:"Tags"`
+	LineItems         []ShopifyLineItem `json:"LineItems"`
+	ShippingAddress   *ShopifyAddress   `json:"ShippingAddress"`
+	BillingAddress    *ShopifyAddress   `json:"BillingAddress"`
+}
+
+type ShopifyFulfillment struct {
+	GovelShopID     string            `json:"GovelShopID"`
+	ID              int64             `json:"ID"`
+	OrderID         int64             `json:"OrderID"`
+	Status          string            `json:"Status"`
+	TrackingCompany string            `json:"TrackingCompany"`
+	TrackingNumber  string            `json:"TrackingNumber"`
+	TrackingURL     string            `json:"TrackingURL"`
+	TrackingURLs    []string          `json:"TrackingURLs"`
+	LineItems       []ShopifyLineItem `json:"LineItems"`
+}
+
+type CreateOrderInput struct {
+	Email                  string
+	FinancialStatus        string
+	Note                   string
+	Tags                   string
+	InventoryBehaviour     string
+	SendReceipt            bool
+	SendFulfillmentReceipt bool
+	LineItems              []CreateOrderLineItem
+	ShippingAddress        *ShopifyAddress
+	BillingAddress         *ShopifyAddress
+	NoteAttributes         []NoteAttribute
+}
+
+type CreateOrderLineItem struct {
+	VariantID int64
+	Quantity  int32
+	Title     string
+	Price     string
+	SKU       string
+}
+
+type NoteAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type CreateFulfillmentInput struct {
+	NotifyCustomer  bool
+	TrackingCompany string
+	TrackingNumber  string
+	TrackingURL     string
 }
 
 func (c *ShopifyClient) doJSON(ctx context.Context, method, path string, q url.Values, reqBody any, dest any) error {
@@ -259,6 +346,132 @@ func (c *ShopifyClient) CreateProduct(ctx context.Context, govelShopID string, i
 	}
 	var out ShopifyProduct
 	if err := c.doJSON(ctx, http.MethodPost, "/api/products", nil, body, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func addressJSON(a *ShopifyAddress) map[string]any {
+	if a == nil {
+		return nil
+	}
+	return map[string]any{
+		"name": a.Name, "company": a.Company, "address1": a.Address1, "address2": a.Address2,
+		"city": a.City, "province": a.Province, "country": a.Country, "zip": a.Zip, "phone": a.Phone,
+	}
+}
+
+// ListOrders calls GET /api/orders.
+func (c *ShopifyClient) ListOrders(ctx context.Context, govelShopID, status, financialStatus string, limit int) ([]ShopifyOrder, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	q := url.Values{}
+	q.Set("govel_shop_id", govelShopID)
+	q.Set("limit", strconv.Itoa(limit))
+	if status != "" {
+		q.Set("status", status)
+	}
+	if financialStatus != "" {
+		q.Set("financial_status", financialStatus)
+	}
+	var payload struct {
+		Orders []ShopifyOrder `json:"orders"`
+	}
+	if err := c.doJSON(ctx, http.MethodGet, "/api/orders", q, nil, &payload); err != nil {
+		return nil, err
+	}
+	return payload.Orders, nil
+}
+
+// CreateOrder calls POST /api/orders (orders.write) — typically on the source/fulfillment shop.
+func (c *ShopifyClient) CreateOrder(ctx context.Context, govelShopID string, in CreateOrderInput) (*ShopifyOrder, error) {
+	body := map[string]any{
+		"govel_shop_id":             govelShopID,
+		"email":                     in.Email,
+		"financial_status":          in.FinancialStatus,
+		"note":                      in.Note,
+		"tags":                      in.Tags,
+		"send_receipt":              in.SendReceipt,
+		"send_fulfillment_receipt":  in.SendFulfillmentReceipt,
+		"inventory_behaviour":       in.InventoryBehaviour,
+	}
+	if in.FinancialStatus == "" {
+		body["financial_status"] = "paid"
+	}
+	if in.InventoryBehaviour == "" {
+		body["inventory_behaviour"] = "decrement_ignoring_policy"
+	}
+	items := make([]map[string]any, 0, len(in.LineItems))
+	for _, li := range in.LineItems {
+		items = append(items, map[string]any{
+			"variant_id": li.VariantID,
+			"quantity":   li.Quantity,
+			"title":      li.Title,
+			"price":      li.Price,
+			"sku":        li.SKU,
+		})
+	}
+	body["line_items"] = items
+	if ship := addressJSON(in.ShippingAddress); ship != nil {
+		body["shipping_address"] = ship
+	}
+	if bill := addressJSON(in.BillingAddress); bill != nil {
+		body["billing_address"] = bill
+	}
+	if len(in.NoteAttributes) > 0 {
+		body["note_attributes"] = in.NoteAttributes
+	}
+	var out ShopifyOrder
+	if err := c.doJSON(ctx, http.MethodPost, "/api/orders", nil, body, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ListFulfillments calls GET /api/orders/{id}/fulfillments.
+func (c *ShopifyClient) ListFulfillments(ctx context.Context, govelShopID string, orderID int64) ([]ShopifyFulfillment, error) {
+	q := url.Values{}
+	q.Set("govel_shop_id", govelShopID)
+	path := "/api/orders/" + strconv.FormatInt(orderID, 10) + "/fulfillments"
+	var payload struct {
+		Fulfillments []ShopifyFulfillment `json:"fulfillments"`
+	}
+	if err := c.doJSON(ctx, http.MethodGet, path, q, nil, &payload); err != nil {
+		return nil, err
+	}
+	return payload.Fulfillments, nil
+}
+
+// CreateFulfillment calls POST /api/orders/{id}/fulfillments (orders.fulfillment_write).
+func (c *ShopifyClient) CreateFulfillment(ctx context.Context, govelShopID string, orderID int64, in CreateFulfillmentInput) (*ShopifyFulfillment, error) {
+	body := map[string]any{
+		"govel_shop_id":     govelShopID,
+		"notify_customer":   in.NotifyCustomer,
+		"tracking_company":  in.TrackingCompany,
+		"tracking_number":   in.TrackingNumber,
+		"tracking_url":      in.TrackingURL,
+	}
+	path := "/api/orders/" + strconv.FormatInt(orderID, 10) + "/fulfillments"
+	var out ShopifyFulfillment
+	if err := c.doJSON(ctx, http.MethodPost, path, nil, body, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateFulfillmentTracking calls POST /api/fulfillments/{id}/tracking.
+func (c *ShopifyClient) UpdateFulfillmentTracking(ctx context.Context, govelShopID string, fulfillmentID int64, in CreateFulfillmentInput) (*ShopifyFulfillment, error) {
+	body := map[string]any{
+		"govel_shop_id":    govelShopID,
+		"notify_customer":  in.NotifyCustomer,
+		"tracking_company": in.TrackingCompany,
+		"tracking_number":  in.TrackingNumber,
+		"tracking_url":     in.TrackingURL,
+	}
+	path := "/api/fulfillments/" + strconv.FormatInt(fulfillmentID, 10) + "/tracking"
+	var out ShopifyFulfillment
+	if err := c.doJSON(ctx, http.MethodPost, path, nil, body, &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
