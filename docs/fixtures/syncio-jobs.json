@@ -1,7 +1,7 @@
 {
   "plugin_id": "govelSyncio",
   "grpc_service": "plugins.govel_syncio.v1.SyncioService",
-  "note": "Plugin-owned recipes for Govel Admin Jobs. Create after installing/activating govel-syncio. Core does not seed Syncio jobs. Syncio consumes govel-shopify shops by govel_shop_id.",
+  "note": "Plugin-owned recipes for Govel Admin Jobs. Create after installing/activating govel-syncio. Core does not seed Syncio jobs. Syncio consumes govel-shopify shops by govel_shop_id. Apply paths call govel-shopify POST /api/inventory/set, PATCH /api/products/{id}, POST /api/products (requires catalog.inventory_write / catalog.product_write scopes on destinations).",
   "jobs": [
     {
       "name": "Syncio map products by SKU",
@@ -22,12 +22,12 @@
       "source_method": "SyncInventory",
       "request": {
         "connection_id": "<connection-uuid>",
-        "dry_run": true
+        "dry_run": false
       },
       "step": {
         "type": "grpc",
         "config": {
-          "note": "Dry-run plans deltas from ListProducts inventory_quantity. Apply requires govel-shopify inventory write API."
+          "note": "Plans deltas from ListProducts inventory_quantity; apply calls POST /api/inventory/set (catalog.inventory_write)."
         }
       }
     },
@@ -36,12 +36,12 @@
       "source_method": "SyncProducts",
       "request": {
         "connection_id": "<connection-uuid>",
-        "dry_run": true
+        "dry_run": false
       },
       "step": {
         "type": "grpc",
         "config": {
-          "note": "Pushes toggled attributes. Apply requires govel-shopify product write API."
+          "note": "Pushes toggled attributes via PATCH /api/products/{id}; create-missing via POST /api/products when connection.create_missing_products (catalog.product_write)."
         }
       }
     }
