@@ -1,0 +1,7 @@
+{{define content}}
+<div id="app"></div>
+<script type="module">
+import { mount } from "/assets/admin/connections.js";
+mount(document.getElementById("app"));
+</script>
+{{end}}

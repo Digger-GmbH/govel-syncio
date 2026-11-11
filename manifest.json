@@ -1,0 +1,280 @@
+{
+  "schemaVersion": "0.1.0",
+  "plugin": {
+    "id": "govelSyncio",
+    "version": "0.1.0",
+    "name": "govel-syncio",
+    "description": "Multi-shop Shopify inventory and product sync for Govel. Consumer of govel-shopify shops; connections, mappings, and sync jobs live here — not in core.",
+    "authors": [
+      {
+        "name": "Maximilian Reidenbach",
+        "email": "maximilian@reidenbachundkolb.de"
+      }
+    ]
+  },
+  "envVars": [
+    {
+      "key": "GRPC_ADDR",
+      "description": "gRPC listen address",
+      "required": false,
+      "defaultValue": ":50051",
+      "sensitive": false
+    },
+    {
+      "key": "HTTP_ADDR",
+      "description": "HTTP API listen address for Admin SPA",
+      "required": false,
+      "defaultValue": ":8080",
+      "sensitive": false
+    },
+    {
+      "key": "CONNECTIONS_STORE_PATH",
+      "description": "Path to persisted Syncio connection JSON",
+      "required": false,
+      "defaultValue": "data/connections.json",
+      "sensitive": false
+    },
+    {
+      "key": "SYNCIO_CONNECTIONS_JSON",
+      "description": "Optional JSON array of connections to bootstrap on start",
+      "required": false,
+      "sensitive": false
+    },
+    {
+      "key": "SHOPIFY_HTTP_BASE",
+      "description": "Base URL of govel-shopify HTTP API (shop registry + product reads)",
+      "required": false,
+      "defaultValue": "http://127.0.0.1:8081",
+      "sensitive": false
+    }
+  ],
+  "db": {
+    "engine": "postgres",
+    "minVersion": "13.4",
+    "namespacePolicy": "required",
+    "permissions": {
+      "table": { "read": [], "manage": ["admin"] },
+      "column": { "read": [] }
+    },
+    "schema": {
+      "tables": [
+        {
+          "name": "govel_syncio_connection",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            { "name": "name", "type": "text", "nullable": false },
+            { "name": "source_shop_id", "type": "uuid", "nullable": false },
+            { "name": "enabled", "type": "bool", "nullable": false, "default": "true" },
+            { "name": "inventory_sync_enabled", "type": "bool", "nullable": false, "default": "true" },
+            { "name": "product_sync_enabled", "type": "bool", "nullable": false, "default": "false" },
+            { "name": "inventory_direction", "type": "text", "nullable": false, "default": "'two_way'" },
+            { "name": "match_by_barcode", "type": "bool", "nullable": false, "default": "true" },
+            { "name": "create_missing_products", "type": "bool", "nullable": false, "default": "false" },
+            { "name": "created_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" },
+            { "name": "updated_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_connection__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_connection__source_shop__idx",
+              "columns": ["source_shop_id"],
+              "unique": false,
+              "method": "btree"
+            }
+          ]
+        },
+        {
+          "name": "govel_syncio_connection_destination",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            {
+              "name": "connection_id",
+              "type": "uuid",
+              "nullable": false,
+              "references": {
+                "table": "govel_syncio_connection",
+                "column": "id",
+                "onDelete": "cascade",
+                "onUpdate": "cascade"
+              }
+            },
+            { "name": "destination_shop_id", "type": "uuid", "nullable": false },
+            { "name": "enabled", "type": "bool", "nullable": false, "default": "true" },
+            { "name": "created_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_connection_destination__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_connection_destination__uniq",
+              "columns": ["connection_id", "destination_shop_id"],
+              "unique": true,
+              "method": "btree"
+            }
+          ]
+        },
+        {
+          "name": "govel_syncio_attribute_toggle",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            {
+              "name": "connection_id",
+              "type": "uuid",
+              "nullable": false,
+              "references": {
+                "table": "govel_syncio_connection",
+                "column": "id",
+                "onDelete": "cascade",
+                "onUpdate": "cascade"
+              }
+            },
+            { "name": "attribute", "type": "text", "nullable": false },
+            { "name": "enabled", "type": "bool", "nullable": false, "default": "false" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_attribute_toggle__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_attribute_toggle__uniq",
+              "columns": ["connection_id", "attribute"],
+              "unique": true,
+              "method": "btree"
+            }
+          ]
+        },
+        {
+          "name": "govel_syncio_product_mapping",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            {
+              "name": "connection_id",
+              "type": "uuid",
+              "nullable": false,
+              "references": {
+                "table": "govel_syncio_connection",
+                "column": "id",
+                "onDelete": "cascade",
+                "onUpdate": "cascade"
+              }
+            },
+            { "name": "destination_shop_id", "type": "uuid", "nullable": false },
+            { "name": "match_key", "type": "text", "nullable": false },
+            { "name": "match_kind", "type": "text", "nullable": false, "default": "'sku'" },
+            { "name": "source_product_id", "type": "text", "nullable": true },
+            { "name": "source_variant_id", "type": "text", "nullable": true },
+            { "name": "dest_product_id", "type": "text", "nullable": true },
+            { "name": "dest_variant_id", "type": "text", "nullable": true },
+            { "name": "last_synced_at", "type": "timestamp with time zone", "nullable": true },
+            { "name": "created_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" },
+            { "name": "updated_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_product_mapping__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_product_mapping__uniq",
+              "columns": ["connection_id", "destination_shop_id", "match_key"],
+              "unique": true,
+              "method": "btree"
+            }
+          ]
+        },
+        {
+          "name": "govel_syncio_sync_cursor",
+          "columns": [
+            { "name": "id", "type": "uuid", "nullable": false, "default": "gen_random_uuid()" },
+            {
+              "name": "connection_id",
+              "type": "uuid",
+              "nullable": false,
+              "references": {
+                "table": "govel_syncio_connection",
+                "column": "id",
+                "onDelete": "cascade",
+                "onUpdate": "cascade"
+              }
+            },
+            { "name": "job_kind", "type": "text", "nullable": false },
+            { "name": "cursor", "type": "text", "nullable": true },
+            { "name": "last_success_at", "type": "timestamp with time zone", "nullable": true },
+            { "name": "last_error", "type": "text", "nullable": true },
+            { "name": "updated_at", "type": "timestamp with time zone", "nullable": false, "default": "now()" }
+          ],
+          "primaryKey": { "columns": ["id"], "name": "govel_syncio_sync_cursor__id__pk" },
+          "indexes": [
+            {
+              "name": "govel_syncio_sync_cursor__uniq",
+              "columns": ["connection_id", "job_kind"],
+              "unique": true,
+              "method": "btree"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "graphql": { "enabled": true },
+  "grpc": {
+    "enabled": true,
+    "package": "plugins.govel_syncio.v1",
+    "schemaName": "Connection",
+    "files": ["proto/syncio.desc"],
+    "importPaths": ["proto"],
+    "descriptorSetFiles": ["proto/syncio.desc"],
+    "includeBaseHealth": false
+  },
+  "adminUi": {
+    "assets": {
+      "js": ["assets/admin/govel-syncio-admin.js"],
+      "css": ["assets/admin/govel-syncio-admin.css"]
+    },
+    "components": [
+      {
+        "key": "connectionsComponent",
+        "name": "Syncio Connections",
+        "type": "widget",
+        "mode": "spa",
+        "runtime": {
+          "componentName": "Connections",
+          "bundleType": "esm",
+          "entryFunction": "mount",
+          "assets": {
+            "js": ["assets/admin/connections.js"],
+            "css": ["assets/admin/govel-syncio-admin.css"]
+          }
+        }
+      }
+    ],
+    "widgetDefinitions": [
+      {
+        "key": "syncioConnections",
+        "component": "connectionsComponent",
+        "title": "Syncio Connections"
+      }
+    ]
+  },
+  "frontend": {
+    "views": [
+      {
+        "key": "connections",
+        "engine": "jet",
+        "template": {
+          "base": "views/base.jet",
+          "content": "views/connections.jet"
+        },
+        "title": "Syncio Connections",
+        "assets": {
+          "css": ["assets/admin/govel-syncio-admin.css"],
+          "js": ["assets/admin/connections.js"]
+        }
+      }
+    ],
+    "routes": [
+      {
+        "route": "/connections",
+        "view": "connections",
+        "exact": true,
+        "methods": ["GET"]
+      }
+    ],
+    "conflictPolicy": "autoPrefix",
+    "conflictTemplate": "/plugins/{pluginIdKebab}{route}"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "plugin_id": "govelSyncio",
+  "grpc_service": "plugins.govel_syncio.v1.SyncioService",
+  "note": "Plugin-owned recipes for Govel Admin Jobs. Create after installing/activating govel-syncio. Core does not seed Syncio jobs. Syncio consumes govel-shopify shops by govel_shop_id.",
+  "jobs": [
+    {
+      "name": "Syncio map products by SKU",
+      "source_method": "MapProductsBySku",
+      "request": {
+        "connection_id": "<connection-uuid>",
+        "dry_run": false
+      },
+      "step": {
+        "type": "grpc",
+        "config": {
+          "note": "Persists govel_syncio_product_mapping rows (also mirrored in plugin JSON store)."
+        }
+      }
+    },
+    {
+      "name": "Syncio inventory sync",
+      "source_method": "SyncInventory",
+      "request": {
+        "connection_id": "<connection-uuid>",
+        "dry_run": true
+      },
+      "step": {
+        "type": "grpc",
+        "config": {
+          "note": "Dry-run plans deltas from ListProducts inventory_quantity. Apply requires govel-shopify inventory write API."
+        }
+      }
+    },
+    {
+      "name": "Syncio product attribute sync",
+      "source_method": "SyncProducts",
+      "request": {
+        "connection_id": "<connection-uuid>",
+        "dry_run": true
+      },
+      "step": {
+        "type": "grpc",
+        "config": {
+          "note": "Pushes toggled attributes. Apply requires govel-shopify product write API."
+        }
+      }
+    }
+  ]
+}
