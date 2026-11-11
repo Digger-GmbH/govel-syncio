@@ -7,6 +7,7 @@ const emptyForm = () => ({
   enabled: true,
   inventory_sync_enabled: true,
   product_sync_enabled: false,
+  order_forwarding_enabled: false,
   inventory_direction: "two_way",
   match_by_barcode: true,
   create_missing_products: false,
@@ -86,6 +87,7 @@ export function mount(root, { apiBase = "" } = {}) {
       enabled: !!c.enabled,
       inventory_sync_enabled: !!c.inventory_sync_enabled,
       product_sync_enabled: !!c.product_sync_enabled,
+      order_forwarding_enabled: !!c.order_forwarding_enabled,
       inventory_direction: c.inventory_direction || "two_way",
       match_by_barcode: !!c.match_by_barcode,
       create_missing_products: !!c.create_missing_products,
@@ -122,7 +124,9 @@ export function mount(root, { apiBase = "" } = {}) {
       let res;
       if (kind === "map") res = await api.mapProducts({ connection_id: state.selectedId, dry_run: dryRun });
       else if (kind === "inventory") res = await api.syncInventory({ connection_id: state.selectedId, dry_run: dryRun });
-      else res = await api.syncProducts({ connection_id: state.selectedId, dry_run: dryRun });
+      else if (kind === "products") res = await api.syncProducts({ connection_id: state.selectedId, dry_run: dryRun });
+      else if (kind === "forward") res = await api.forwardOrders({ connection_id: state.selectedId, dry_run: dryRun });
+      else res = await api.syncFulfillments({ connection_id: state.selectedId, dry_run: dryRun });
       state.notice = `${kind} → ${JSON.stringify(res)}`;
     } catch (e) {
       state.error = e.message;
@@ -156,7 +160,7 @@ export function mount(root, { apiBase = "" } = {}) {
         el("div", { className: "header" }, [
           el("div", {}, [
             el("h1", { text: "Syncio Connections" }),
-            el("p", { text: "Source ↔ destinations via govel-shopify shop IDs · attribute toggles · inventory/product jobs" }),
+            el("p", { text: "Source ↔ destinations via govel-shopify shop IDs · inventory/product · order forwarding" }),
           ]),
         ]),
         state.error ? el("p", { className: "error", text: state.error }) : null,
@@ -206,6 +210,7 @@ export function mount(root, { apiBase = "" } = {}) {
             check("Enabled", state.form.enabled, (v) => { state.form.enabled = v; }),
             check("Inventory sync", state.form.inventory_sync_enabled, (v) => { state.form.inventory_sync_enabled = v; }),
             check("Product sync", state.form.product_sync_enabled, (v) => { state.form.product_sync_enabled = v; }),
+            check("Order forwarding", state.form.order_forwarding_enabled, (v) => { state.form.order_forwarding_enabled = v; }),
             check("Match barcode", state.form.match_by_barcode, (v) => { state.form.match_by_barcode = v; }),
             check("Create missing", state.form.create_missing_products, (v) => { state.form.create_missing_products = v; }),
           ]),
@@ -247,12 +252,16 @@ export function mount(root, { apiBase = "" } = {}) {
                 el("button", { text: "Sync inventory", onClick: () => runJob("inventory", false) }),
                 el("button", { text: "Products dry-run", onClick: () => runJob("products", true) }),
                 el("button", { text: "Sync products", onClick: () => runJob("products", false) }),
+                el("button", { text: "Forward orders dry", onClick: () => runJob("forward", true) }),
+                el("button", { text: "Forward orders", onClick: () => runJob("forward", false) }),
+                el("button", { text: "Tracking sync dry", onClick: () => runJob("fulfill", true) }),
+                el("button", { text: "Sync tracking", onClick: () => runJob("fulfill", false) }),
               ])
             : null,
         ]),
         el("table", { className: "table" }, [
           el("thead", {}, [
-            el("tr", {}, ["Name", "Source", "Destinations", "Inv", "Prod", ""].map((t) => el("th", { text: t }))),
+            el("tr", {}, ["Name", "Source", "Destinations", "Inv", "Prod", "Orders", ""].map((t) => el("th", { text: t }))),
           ]),
           el("tbody", {}, state.connections.map((c) =>
             el("tr", {}, [
@@ -261,6 +270,7 @@ export function mount(root, { apiBase = "" } = {}) {
               el("td", { text: (c.destination_shop_ids || []).map(shopLabel).join(", ") || "—" }),
               el("td", { text: c.inventory_sync_enabled ? c.inventory_direction : "off" }),
               el("td", { text: c.product_sync_enabled ? "on" : "off" }),
+              el("td", { text: c.order_forwarding_enabled ? "on" : "off" }),
               el("td", {}, [
                 el("button", { text: "Edit", onClick: () => edit(c) }),
                 el("button", { text: "Delete", onClick: () => remove(c.id) }),

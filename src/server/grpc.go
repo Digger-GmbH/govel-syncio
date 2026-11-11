@@ -21,17 +21,18 @@ func NewGRPCServer(store *syncio.Store, engine *syncio.Engine) *GRPCServer {
 
 func toProtoConn(c syncio.Connection) *proto.Connection {
 	return &proto.Connection{
-		Id:                    c.ID,
-		Name:                  c.Name,
-		SourceShopId:          c.SourceShopID,
-		DestinationShopIds:    c.DestinationShopIDs,
-		Enabled:               c.Enabled,
-		InventorySyncEnabled:  c.InventorySyncEnabled,
-		ProductSyncEnabled:    c.ProductSyncEnabled,
-		InventoryDirection:    c.InventoryDirection,
-		MatchByBarcode:        c.MatchByBarcode,
-		CreateMissingProducts: c.CreateMissingProducts,
-		AttributeToggles:      c.AttributeToggles,
+		Id:                     c.ID,
+		Name:                   c.Name,
+		SourceShopId:           c.SourceShopID,
+		DestinationShopIds:     c.DestinationShopIDs,
+		Enabled:                c.Enabled,
+		InventorySyncEnabled:   c.InventorySyncEnabled,
+		ProductSyncEnabled:     c.ProductSyncEnabled,
+		OrderForwardingEnabled: c.OrderForwardingEnabled,
+		InventoryDirection:     c.InventoryDirection,
+		MatchByBarcode:         c.MatchByBarcode,
+		CreateMissingProducts:  c.CreateMissingProducts,
+		AttributeToggles:       c.AttributeToggles,
 	}
 }
 
@@ -78,6 +79,9 @@ func (s *GRPCServer) UpsertConnection(ctx context.Context, req *proto.UpsertConn
 	}
 	if req.CreateMissingProducts != nil {
 		in.CreateMissingProducts = req.GetCreateMissingProducts()
+	}
+	if req.OrderForwardingEnabled != nil {
+		in.OrderForwardingEnabled = req.GetOrderForwardingEnabled()
 	}
 	saved, err := s.Store.Upsert(in)
 	if err != nil {
@@ -187,6 +191,62 @@ func (s *GRPCServer) SyncProducts(ctx context.Context, req *proto.SyncProductsRe
 		})
 	}
 	return &proto.SyncProductsResponse{
+		Planned: res.Planned, Applied: res.Applied, Skipped: res.Skipped, Blocked: res.Blocked,
+		Actions: out, Notes: res.Notes,
+	}, nil
+}
+
+func (s *GRPCServer) ListOrderMappings(ctx context.Context, req *proto.ListOrderMappingsRequest) (*proto.ListOrderMappingsResponse, error) {
+	list := s.Store.ListOrderMappings(req.GetConnectionId(), req.GetDestinationShopId())
+	out := make([]*proto.OrderMapping, 0, len(list))
+	for _, m := range list {
+		pm := &proto.OrderMapping{
+			Id: m.ID, ConnectionId: m.ConnectionID, DestinationShopId: m.DestinationShopID,
+			DestOrderId: m.DestOrderID, DestOrderName: m.DestOrderName,
+			SourceOrderId: m.SourceOrderID, SourceOrderName: m.SourceOrderName,
+			LastTrackingNumber: m.LastTrackingNumber,
+		}
+		if m.LastFulfillmentSync != nil {
+			pm.LastFulfillmentSync = m.LastFulfillmentSync.Format("2006-01-02T15:04:05Z07:00")
+		}
+		out = append(out, pm)
+	}
+	return &proto.ListOrderMappingsResponse{Mappings: out}, nil
+}
+
+func (s *GRPCServer) ForwardOrders(ctx context.Context, req *proto.ForwardOrdersRequest) (*proto.ForwardOrdersResponse, error) {
+	res, err := s.Engine.ForwardOrders(ctx, req.GetConnectionId(), req.GetDryRun())
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+	out := make([]*proto.OrderForwardAction, 0, len(res.Actions))
+	for _, a := range res.Actions {
+		out = append(out, &proto.OrderForwardAction{
+			DestinationShopId: a.DestinationShopID, DestOrderId: a.DestOrderID, DestOrderName: a.DestOrderName,
+			SourceOrderId: a.SourceOrderID, SourceOrderName: a.SourceOrderName,
+			Action: a.Action, Reason: a.Reason,
+		})
+	}
+	return &proto.ForwardOrdersResponse{
+		Planned: res.Planned, Applied: res.Applied, Skipped: res.Skipped, Blocked: res.Blocked,
+		Actions: out, Notes: res.Notes,
+	}, nil
+}
+
+func (s *GRPCServer) SyncFulfillments(ctx context.Context, req *proto.SyncFulfillmentsRequest) (*proto.SyncFulfillmentsResponse, error) {
+	res, err := s.Engine.SyncFulfillments(ctx, req.GetConnectionId(), req.GetDryRun())
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+	out := make([]*proto.FulfillmentSyncAction, 0, len(res.Actions))
+	for _, a := range res.Actions {
+		out = append(out, &proto.FulfillmentSyncAction{
+			DestinationShopId: a.DestinationShopID, DestOrderId: a.DestOrderID, SourceOrderId: a.SourceOrderID,
+			TrackingNumber: a.TrackingNumber, TrackingCompany: a.TrackingCompany,
+			Action: a.Action, Reason: a.Reason,
+		})
+	}
+	return &proto.SyncFulfillmentsResponse{
 		Planned: res.Planned, Applied: res.Applied, Skipped: res.Skipped, Blocked: res.Blocked,
 		Actions: out, Notes: res.Notes,
 	}, nil

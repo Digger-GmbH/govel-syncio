@@ -19,19 +19,20 @@ func newID() string {
 
 // Connection is a Syncio multi-shop sync link (source ↔ destinations).
 type Connection struct {
-	ID                    string          `json:"id"`
-	Name                  string          `json:"name"`
-	SourceShopID          string          `json:"source_shop_id"`
-	DestinationShopIDs    []string        `json:"destination_shop_ids"`
-	Enabled               bool            `json:"enabled"`
-	InventorySyncEnabled  bool            `json:"inventory_sync_enabled"`
-	ProductSyncEnabled    bool            `json:"product_sync_enabled"`
-	InventoryDirection    string          `json:"inventory_direction"` // source_to_dest | dest_to_source | two_way
-	MatchByBarcode        bool            `json:"match_by_barcode"`
-	CreateMissingProducts bool            `json:"create_missing_products"`
-	AttributeToggles      map[string]bool `json:"attribute_toggles"`
-	CreatedAt             time.Time       `json:"created_at"`
-	UpdatedAt             time.Time       `json:"updated_at"`
+	ID                     string          `json:"id"`
+	Name                   string          `json:"name"`
+	SourceShopID           string          `json:"source_shop_id"`
+	DestinationShopIDs     []string        `json:"destination_shop_ids"`
+	Enabled                bool            `json:"enabled"`
+	InventorySyncEnabled   bool            `json:"inventory_sync_enabled"`
+	ProductSyncEnabled     bool            `json:"product_sync_enabled"`
+	OrderForwardingEnabled bool            `json:"order_forwarding_enabled"`
+	InventoryDirection     string          `json:"inventory_direction"` // source_to_dest | dest_to_source | two_way
+	MatchByBarcode         bool            `json:"match_by_barcode"`
+	CreateMissingProducts  bool            `json:"create_missing_products"`
+	AttributeToggles       map[string]bool `json:"attribute_toggles"`
+	CreatedAt              time.Time       `json:"created_at"`
+	UpdatedAt              time.Time       `json:"updated_at"`
 }
 
 // ProductMapping links a source variant to a destination variant by SKU/barcode.
@@ -50,9 +51,25 @@ type ProductMapping struct {
 	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
+// OrderMapping links a destination order to the forwarded source fulfillment order.
+type OrderMapping struct {
+	ID                  string     `json:"id"`
+	ConnectionID        string     `json:"connection_id"`
+	DestinationShopID   string     `json:"destination_shop_id"`
+	DestOrderID         string     `json:"dest_order_id"`
+	DestOrderName       string     `json:"dest_order_name,omitempty"`
+	SourceOrderID       string     `json:"source_order_id,omitempty"`
+	SourceOrderName     string     `json:"source_order_name,omitempty"`
+	LastTrackingNumber  string     `json:"last_tracking_number,omitempty"`
+	LastFulfillmentSync *time.Time `json:"last_fulfillment_sync,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
 type storeFile struct {
-	Connections []Connection     `json:"connections"`
-	Mappings    []ProductMapping `json:"mappings"`
+	Connections   []Connection     `json:"connections"`
+	Mappings      []ProductMapping `json:"mappings"`
+	OrderMappings []OrderMapping   `json:"order_mappings"`
 }
 
 // Store persists connections and mappings to a JSON file (host Postgres via manifest at install).
@@ -213,6 +230,14 @@ func (s *Store) Delete(id string) bool {
 			maps = append(maps, m)
 		}
 		s.data.Mappings = maps
+		omaps := s.data.OrderMappings[:0]
+		for _, m := range s.data.OrderMappings {
+			if m.ConnectionID == id {
+				continue
+			}
+			omaps = append(omaps, m)
+		}
+		s.data.OrderMappings = omaps
 		_ = s.flushLocked()
 	}
 	return found
@@ -259,5 +284,57 @@ func (s *Store) UpsertMapping(in ProductMapping) (ProductMapping, error) {
 	in.CreatedAt = now
 	in.UpdatedAt = now
 	s.data.Mappings = append(s.data.Mappings, in)
+	return in, s.flushLocked()
+}
+
+func (s *Store) ListOrderMappings(connectionID, destShopID string) []OrderMapping {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []OrderMapping
+	for _, m := range s.data.OrderMappings {
+		if connectionID != "" && m.ConnectionID != connectionID {
+			continue
+		}
+		if destShopID != "" && m.DestinationShopID != destShopID {
+			continue
+		}
+		out = append(out, m)
+	}
+	return out
+}
+
+func (s *Store) FindOrderMapping(connectionID, destShopID, destOrderID string) (OrderMapping, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, m := range s.data.OrderMappings {
+		if m.ConnectionID == connectionID && m.DestinationShopID == destShopID && m.DestOrderID == destOrderID {
+			return m, true
+		}
+	}
+	return OrderMapping{}, false
+}
+
+func (s *Store) UpsertOrderMapping(in OrderMapping) (OrderMapping, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	now := time.Now().UTC()
+	if in.ConnectionID == "" || in.DestinationShopID == "" || in.DestOrderID == "" {
+		return OrderMapping{}, fmt.Errorf("connection_id, destination_shop_id, dest_order_id required")
+	}
+	for i, m := range s.data.OrderMappings {
+		if m.ConnectionID == in.ConnectionID && m.DestinationShopID == in.DestinationShopID && m.DestOrderID == in.DestOrderID {
+			in.ID = m.ID
+			in.CreatedAt = m.CreatedAt
+			in.UpdatedAt = now
+			s.data.OrderMappings[i] = in
+			return in, s.flushLocked()
+		}
+	}
+	if in.ID == "" {
+		in.ID = newID()
+	}
+	in.CreatedAt = now
+	in.UpdatedAt = now
+	s.data.OrderMappings = append(s.data.OrderMappings, in)
 	return in, s.flushLocked()
 }

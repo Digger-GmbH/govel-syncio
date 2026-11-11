@@ -26,6 +26,9 @@ func NewHTTPServer(store *syncio.Store, engine *syncio.Engine, shopify *syncio.S
 	h.Mux.HandleFunc("/api/jobs/map-products", h.handleMapProducts)
 	h.Mux.HandleFunc("/api/jobs/sync-inventory", h.handleSyncInventory)
 	h.Mux.HandleFunc("/api/jobs/sync-products", h.handleSyncProducts)
+	h.Mux.HandleFunc("/api/jobs/forward-orders", h.handleForwardOrders)
+	h.Mux.HandleFunc("/api/jobs/sync-fulfillments", h.handleSyncFulfillments)
+	h.Mux.HandleFunc("/api/order-mappings", h.handleOrderMappings)
 	if staticDir != "" {
 		fs := http.FileServer(http.Dir(staticDir))
 		h.Mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
@@ -53,17 +56,18 @@ func connJSON(c syncio.Connection) map[string]any {
 		toggles = syncio.DefaultAttributeToggles()
 	}
 	return map[string]any{
-		"id":                      c.ID,
-		"name":                    c.Name,
-		"source_shop_id":          c.SourceShopID,
-		"destination_shop_ids":    c.DestinationShopIDs,
-		"enabled":                 c.Enabled,
-		"inventory_sync_enabled":  c.InventorySyncEnabled,
-		"product_sync_enabled":    c.ProductSyncEnabled,
-		"inventory_direction":     c.InventoryDirection,
-		"match_by_barcode":        c.MatchByBarcode,
-		"create_missing_products": c.CreateMissingProducts,
-		"attribute_toggles":       toggles,
+		"id":                       c.ID,
+		"name":                     c.Name,
+		"source_shop_id":           c.SourceShopID,
+		"destination_shop_ids":     c.DestinationShopIDs,
+		"enabled":                  c.Enabled,
+		"inventory_sync_enabled":   c.InventorySyncEnabled,
+		"product_sync_enabled":     c.ProductSyncEnabled,
+		"order_forwarding_enabled": c.OrderForwardingEnabled,
+		"inventory_direction":      c.InventoryDirection,
+		"match_by_barcode":         c.MatchByBarcode,
+		"create_missing_products":  c.CreateMissingProducts,
+		"attribute_toggles":        toggles,
 	}
 }
 
@@ -291,6 +295,70 @@ func (h *HTTPServer) handleSyncProducts(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	res, err := h.Engine.SyncProducts(r.Context(), body.ConnectionID, body.DryRun)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (h *HTTPServer) handleOrderMappings(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		writeJSON(w, http.StatusOK, map[string]string{"ok": "true"})
+		return
+	}
+	if r.Method != http.MethodGet {
+		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	q := r.URL.Query()
+	list := h.Store.ListOrderMappings(q.Get("connection_id"), q.Get("destination_shop_id"))
+	writeJSON(w, http.StatusOK, map[string]any{"mappings": list})
+}
+
+func (h *HTTPServer) handleForwardOrders(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		writeJSON(w, http.StatusOK, map[string]string{"ok": "true"})
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	var body struct {
+		ConnectionID string `json:"connection_id"`
+		DryRun       bool   `json:"dry_run"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	res, err := h.Engine.ForwardOrders(r.Context(), body.ConnectionID, body.DryRun)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (h *HTTPServer) handleSyncFulfillments(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		writeJSON(w, http.StatusOK, map[string]string{"ok": "true"})
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	var body struct {
+		ConnectionID string `json:"connection_id"`
+		DryRun       bool   `json:"dry_run"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	res, err := h.Engine.SyncFulfillments(r.Context(), body.ConnectionID, body.DryRun)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return

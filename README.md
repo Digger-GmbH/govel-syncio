@@ -15,11 +15,12 @@ Design: Project store `docs/govel-syncio.md` (GV-75).
 - SKU / barcode product mapping job
 - Inventory sync via govel-shopify `POST /api/inventory/set` (`catalog.inventory_write`)
 - Product update via `PATCH /api/products/{id}`; create-missing via `POST /api/products` (`catalog.product_write`)
-- Preflight: destination shops must satisfy write use-cases when `granted_scopes` is set
+- Order forwarding: paid dest orders → source `CreateOrder` (`orders.write`); tracking back via dest fulfillments (`orders.fulfillment_write`)
+- Preflight: shops must satisfy write use-cases when `granted_scopes` is set
 - Admin SPA for connections + toggles + dry-run/run jobs
 - Manifest DB schema + `graphql.enabled: true` for host GraphQL / IntraSPA
 
-Deferred: order forwarding, payouts, WooCommerce.
+Deferred: payouts, WooCommerce.
 
 ## Requirements
 
@@ -57,11 +58,13 @@ Plugin-owned recipes: `docs/fixtures/syncio-jobs.json`. Create via Govel Admin �
 | `MapProductsBySku` | Link variants across shops by SKU/barcode |
 | `SyncInventory` | Plan/apply stock deltas (oversell clamp to ≥ 0) |
 | `SyncProducts` | Push toggled attributes source → destinations |
+| `ForwardOrders` | Dest paid/open orders → create fulfillment order on source |
+| `SyncFulfillments` | Source tracking → dest fulfillment / tracking update |
 
 ## Manifest / install
 
 - Plugin id: `govelSyncio`
-- Tables: `govel_syncio_connection`, `_destination`, `_attribute_toggle`, `_product_mapping`, `_sync_cursor`
+- Tables: `govel_syncio_connection`, `_destination`, `_attribute_toggle`, `_product_mapping`, `_order_mapping`, `_sync_cursor`
 - gRPC: `plugins.govel_syncio.v1.SyncioService` / descriptor `proto/syncio.desc`
 - Admin widget: Syncio Connections
 - Frontend route: `/connections` (auto-prefixed)
@@ -70,14 +73,16 @@ Plugin-owned recipes: `docs/fixtures/syncio-jobs.json`. Create via Govel Admin �
 
 Declare `granted_scopes` on each govel-shopify shop used as a Syncio destination. Empty granted scopes = legacy allow (shopify-side); once set, missing scopes block writes.
 
-| Syncio feature | govel-shopify use-case | Shopify scopes |
-|----------------|------------------------|----------------|
-| Inventory apply | `catalog.inventory_write` | `write_inventory`, `read_inventory` |
-| Product update / create-missing | `catalog.product_write` | `write_products`, `read_products` |
+| Syncio feature | govel-shopify use-case | Shopify scopes | Shop |
+|----------------|------------------------|----------------|------|
+| Inventory apply | `catalog.inventory_write` | `write_inventory`, `read_inventory` | destination |
+| Product update / create-missing | `catalog.product_write` | `write_products`, `read_products` | destination |
+| Order forward (create) | `orders.write` | `write_orders`, `read_orders` | source |
+| Tracking sync back | `orders.fulfillment_write` | merchant-managed FO write/read + `read_orders` | destination |
 
-Also keep `read_products` on source + destinations for ListProducts / mapping.
+Also keep `read_products` / `read_orders` on source + destinations for List* / mapping.
 
-Depends on govel-shopify catalog write APIs ([PR #6](https://github.com/Digger-GmbH/govel-shopify/pull/6), `docs/catalog-write.md`).
+Depends on govel-shopify catalog write APIs ([PR #6](https://github.com/Digger-GmbH/govel-shopify/pull/6), `docs/catalog-write.md`) and order write APIs (`docs/order-write.md`).
 
 ## Docker
 
