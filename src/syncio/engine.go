@@ -57,17 +57,6 @@ func indexVariants(products []ShopifyProduct, matchByBarcode bool) map[string]va
 	return out
 }
 
-func matchKeys(ref variantRef, matchByBarcode bool) []struct{ Kind, Key string } {
-	var keys []struct{ Kind, Key string }
-	if ref.SKU != "" {
-		keys = append(keys, struct{ Kind, Key string }{"sku", strings.ToLower(ref.SKU)})
-	}
-	if matchByBarcode && ref.Barcode != "" {
-		keys = append(keys, struct{ Kind, Key string }{"barcode", strings.ToLower(ref.Barcode)})
-	}
-	return keys
-}
-
 type MapResult struct {
 	Linked          int32
 	UnmatchedSource int32
@@ -92,7 +81,6 @@ func (e *Engine) MapProductsBySku(ctx context.Context, connectionID, destShopID 
 	srcIdx := indexVariants(srcProducts, conn.MatchByBarcode)
 
 	res := &MapResult{Notes: "matched by SKU (barcode fallback when enabled)"}
-	seenSource := map[string]bool{}
 
 	for _, destID := range dests {
 		destProducts, err := e.Shopify.ListProducts(ctx, destID, 250)
@@ -101,6 +89,7 @@ func (e *Engine) MapProductsBySku(ctx context.Context, connectionID, destShopID 
 		}
 		destIdx := indexVariants(destProducts, conn.MatchByBarcode)
 		matchedDest := map[string]bool{}
+		seenSource := map[string]bool{}
 
 		for key, src := range srcIdx {
 			kind := "sku"
@@ -185,21 +174,32 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 	}
 	srcIdx := indexVariants(srcProducts, conn.MatchByBarcode)
 	res := &InventoryResult{
-		Notes: "compares variant inventory_quantity via govel-shopify ListProducts; writes require catalog.inventory_write",
+		Notes: "writes via govel-shopify POST /api/inventory/set (use-case catalog.inventory_write; dest granted_scopes need write_inventory+read_inventory)",
 	}
 
 	for _, destID := range conn.DestinationShopIDs {
+		if !dryRun {
+			if err := e.Shopify.RequireUseCase(ctx, destID, UseCaseInventoryWrite); err != nil {
+				res.Blocked++
+				res.Deltas = append(res.Deltas, InventoryDelta{
+					DestinationShopID: destID,
+					Action:            "blocked",
+					Reason:            err.Error(),
+				})
+				continue
+			}
+		}
+
 		destProducts, err := e.Shopify.ListProducts(ctx, destID, 250)
 		if err != nil {
 			return nil, fmt.Errorf("list dest products: %w", err)
 		}
 		destIdx := indexVariants(destProducts, conn.MatchByBarcode)
 
-		// Prefer persisted mappings; fall back to live SKU/barcode index.
 		mappings := e.Store.ListMappings(conn.ID, destID)
 		type pair struct {
-			key               string
-			src, dest         variantRef
+			key                string
+			src, dest          variantRef
 			srcVarID, dstVarID string
 		}
 		var pairs []pair
@@ -210,7 +210,6 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 				src, sok := srcIdx[sk]
 				dest, dok := destIdx[sk]
 				if !sok || !dok {
-					// try rebuild from ids if index miss
 					continue
 				}
 				pairs = append(pairs, pair{key: m.MatchKey, src: src, dest: dest, srcVarID: m.SourceVariantID, dstVarID: m.DestVariantID})
@@ -223,9 +222,9 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 				}
 				raw := strings.TrimPrefix(strings.TrimPrefix(key, "sku:"), "barcode:")
 				pairs = append(pairs, pair{
-					key:     raw,
-					src:     src,
-					dest:    dest,
+					key:      raw,
+					src:      src,
+					dest:     dest,
 					srcVarID: strconv.FormatInt(src.VariantID, 10),
 					dstVarID: strconv.FormatInt(dest.VariantID, 10),
 				})
@@ -236,13 +235,11 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 			planned := p.dest.Qty
 			switch conn.InventoryDirection {
 			case "source_to_dest", "two_way":
-				// Oversell prevention: never push negative; clamp to source available.
 				planned = p.src.Qty
 				if planned < 0 {
 					planned = 0
 				}
 			case "dest_to_source":
-				// Mirror dest onto source in a later pass; for dest row we skip.
 				res.Skipped++
 				res.Deltas = append(res.Deltas, InventoryDelta{
 					MatchKey: p.key, DestinationShopID: destID,
@@ -274,7 +271,7 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 				res.Deltas = append(res.Deltas, d)
 				continue
 			}
-			if err := e.Shopify.SetInventoryQuantity(ctx, destID, p.dstVarID, planned); err != nil {
+			if err := e.Shopify.SetInventoryQuantity(ctx, destID, p.dstVarID, planned, 0); err != nil {
 				d.Action = "blocked"
 				d.Reason = err.Error()
 				res.Blocked++
@@ -283,10 +280,6 @@ func (e *Engine) SyncInventory(ctx context.Context, connectionID string, dryRun 
 			}
 			res.Applied++
 			res.Deltas = append(res.Deltas, d)
-
-			// two_way: also push dest→source when dest changed externally would be webhook-driven;
-			// for batch job, source_to_dest leg above is the primary.
-			_ = matchKeys
 		}
 	}
 	return res, nil
@@ -309,6 +302,32 @@ type ProductSyncResult struct {
 	Notes   string
 }
 
+func buildAttributePayload(src variantRef, enabledAttrs []string) map[string]any {
+	attrs := map[string]any{}
+	for _, a := range enabledAttrs {
+		switch a {
+		case "title":
+			attrs["title"] = src.Title
+		case "description":
+			attrs["body_html"] = src.BodyHTML
+		case "price":
+			attrs["price"] = src.Price
+		case "tags":
+			attrs["tags"] = src.Tags
+		case "status":
+			attrs["status"] = src.Status
+		case "vendor":
+			attrs["vendor"] = src.Vendor
+		case "product_type":
+			attrs["product_type"] = src.Type
+		case "images", "variants", "metafields":
+			// Accepted by govel-shopify as future flags; ignored in v1 write path.
+			attrs[a] = true
+		}
+	}
+	return attrs
+}
+
 func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun bool) (*ProductSyncResult, error) {
 	conn, ok := e.Store.Get(connectionID)
 	if !ok {
@@ -323,7 +342,7 @@ func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun b
 			enabledAttrs = append(enabledAttrs, a)
 		}
 	}
-	if len(enabledAttrs) == 0 {
+	if len(enabledAttrs) == 0 && !conn.CreateMissingProducts {
 		return &ProductSyncResult{Notes: "no attribute toggles enabled"}, nil
 	}
 
@@ -333,21 +352,41 @@ func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun b
 	}
 	srcIdx := indexVariants(srcProducts, conn.MatchByBarcode)
 	res := &ProductSyncResult{
-		Notes: "updates toggled attributes via govel-shopify product write API when available",
+		Notes: "updates via PATCH /api/products/{id}; create-missing via POST /api/products (catalog.product_write; dest granted_scopes need write_products+read_products)",
 	}
 
 	for _, destID := range conn.DestinationShopIDs {
+		if !dryRun {
+			if err := e.Shopify.RequireUseCase(ctx, destID, UseCaseProductWrite); err != nil {
+				res.Blocked++
+				res.Actions = append(res.Actions, ProductSyncAction{
+					DestinationShopID: destID,
+					Action:            "blocked",
+					Reason:            err.Error(),
+				})
+				continue
+			}
+		}
+
+		destProducts, err := e.Shopify.ListProducts(ctx, destID, 250)
+		if err != nil {
+			return nil, fmt.Errorf("list dest products: %w", err)
+		}
+		destIdx := indexVariants(destProducts, conn.MatchByBarcode)
+
 		mappings := e.Store.ListMappings(conn.ID, destID)
 		if len(mappings) == 0 {
-			// auto-map dry first
-			mr, err := e.MapProductsBySku(ctx, conn.ID, destID, false)
+			mr, err := e.MapProductsBySku(ctx, conn.ID, destID, dryRun)
 			if err != nil {
 				return nil, err
 			}
 			mappings = mr.Mappings
 		}
+
+		mappedKeys := map[string]bool{}
 		for _, m := range mappings {
 			sk := m.MatchKind + ":" + strings.ToLower(m.MatchKey)
+			mappedKeys[sk] = true
 			src, ok := srcIdx[sk]
 			if !ok {
 				res.Skipped++
@@ -357,28 +396,10 @@ func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun b
 				})
 				continue
 			}
-			attrs := map[string]any{}
-			for _, a := range enabledAttrs {
-				switch a {
-				case "title":
-					attrs["title"] = src.Title
-				case "description":
-					attrs["body_html"] = src.BodyHTML
-				case "price":
-					attrs["price"] = src.Price
-				case "tags":
-					attrs["tags"] = src.Tags
-				case "status":
-					attrs["status"] = src.Status
-				case "vendor":
-					attrs["vendor"] = src.Vendor
-				case "product_type":
-					attrs["product_type"] = src.Type
-				case "images", "variants", "metafields":
-					// Declared for UI; full payload sync lands with product write API.
-					attrs[a] = true
-				}
+			if len(enabledAttrs) == 0 {
+				continue
 			}
+			attrs := buildAttributePayload(src, enabledAttrs)
 			act := ProductSyncAction{
 				MatchKey: m.MatchKey, DestinationShopID: destID,
 				Action: "update", Attributes: enabledAttrs,
@@ -389,7 +410,7 @@ func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun b
 				res.Actions = append(res.Actions, act)
 				continue
 			}
-			if err := e.Shopify.UpdateProductAttributes(ctx, destID, m.DestProductID, attrs); err != nil {
+			if err := e.Shopify.UpdateProductAttributes(ctx, destID, m.DestProductID, m.DestVariantID, attrs); err != nil {
 				act.Action = "blocked"
 				act.Reason = err.Error()
 				res.Blocked++
@@ -399,8 +420,90 @@ func (e *Engine) SyncProducts(ctx context.Context, connectionID string, dryRun b
 			res.Applied++
 			res.Actions = append(res.Actions, act)
 		}
-		if conn.CreateMissingProducts {
-			res.Notes += "; create_missing_products requested but blocked until govel-shopify product create API exists"
+
+		if !conn.CreateMissingProducts {
+			continue
+		}
+
+		// Prefer SKU keys for create-missing; fall back to barcode-only variants.
+		seenCreate := map[string]bool{}
+		for key, src := range srcIdx {
+			if mappedKeys[key] {
+				continue
+			}
+			if _, exists := destIdx[key]; exists {
+				continue
+			}
+			kind := "sku"
+			raw := strings.TrimPrefix(key, "sku:")
+			if strings.HasPrefix(key, "barcode:") {
+				kind = "barcode"
+				raw = strings.TrimPrefix(key, "barcode:")
+				// Skip barcode-only create when a SKU key for same variant will run.
+				if src.SKU != "" {
+					continue
+				}
+			}
+			dedupe := kind + ":" + raw + ":" + strconv.FormatInt(src.VariantID, 10)
+			if seenCreate[dedupe] {
+				continue
+			}
+			seenCreate[dedupe] = true
+
+			status := src.Status
+			if status == "" {
+				status = "draft"
+			}
+			act := ProductSyncAction{
+				MatchKey: raw, DestinationShopID: destID,
+				Action: "create", Attributes: enabledAttrs,
+			}
+			res.Planned++
+			if dryRun {
+				act.Reason = "dry_run"
+				res.Actions = append(res.Actions, act)
+				continue
+			}
+			created, err := e.Shopify.CreateProduct(ctx, destID, CreateProductInput{
+				Title:       src.Title,
+				BodyHTML:    src.BodyHTML,
+				Vendor:      src.Vendor,
+				ProductType: src.Type,
+				Tags:        src.Tags,
+				Status:      status,
+				Variants: []CreateVariantInput{{
+					Title:   src.Title,
+					SKU:     src.SKU,
+					Price:   src.Price,
+					Barcode: src.Barcode,
+				}},
+			})
+			if err != nil {
+				act.Action = "blocked"
+				act.Reason = err.Error()
+				res.Blocked++
+				res.Actions = append(res.Actions, act)
+				continue
+			}
+			destProductID := strconv.FormatInt(created.ID, 10)
+			destVariantID := ""
+			if len(created.Variants) > 0 {
+				destVariantID = strconv.FormatInt(created.Variants[0].ID, 10)
+			}
+			if _, err := e.Store.UpsertMapping(ProductMapping{
+				ConnectionID:      conn.ID,
+				DestinationShopID: destID,
+				MatchKey:          raw,
+				MatchKind:         kind,
+				SourceProductID:   strconv.FormatInt(src.ProductID, 10),
+				SourceVariantID:   strconv.FormatInt(src.VariantID, 10),
+				DestProductID:     destProductID,
+				DestVariantID:     destVariantID,
+			}); err != nil {
+				act.Reason = "created but mapping failed: " + err.Error()
+			}
+			res.Applied++
+			res.Actions = append(res.Actions, act)
 		}
 	}
 	return res, nil
