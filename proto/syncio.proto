@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package plugins.govel_syncio.v1;
+
+option go_package = "github.com/Digger-GmbH/govel-syncio/proto;proto";
+
+// SyncioService manages multi-shop sync connections and Jobs for inventory/product sync.
+// Shops and Shopify Admin tokens stay in govel-shopify; Syncio only stores govel_shop_id refs.
+service SyncioService {
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  rpc UpsertConnection(UpsertConnectionRequest) returns (Connection);
+  rpc DeleteConnection(DeleteConnectionRequest) returns (DeleteConnectionResponse);
+  rpc GetConnection(GetConnectionRequest) returns (Connection);
+
+  rpc ListAttributeToggles(ListAttributeTogglesRequest) returns (ListAttributeTogglesResponse);
+  rpc SetAttributeToggles(SetAttributeTogglesRequest) returns (ListAttributeTogglesResponse);
+
+  rpc ListProductMappings(ListProductMappingsRequest) returns (ListProductMappingsResponse);
+
+  // Job entry points (plugin-owned recipes call these).
+  rpc MapProductsBySku(MapProductsBySkuRequest) returns (MapProductsBySkuResponse);
+  rpc SyncInventory(SyncInventoryRequest) returns (SyncInventoryResponse);
+  rpc SyncProducts(SyncProductsRequest) returns (SyncProductsResponse);
+
+  rpc ListDefaultAttributes(ListDefaultAttributesRequest) returns (ListDefaultAttributesResponse);
+}
+
+message ListConnectionsRequest {}
+
+message ListConnectionsResponse {
+  repeated Connection connections = 1;
+}
+
+message GetConnectionRequest {
+  string id = 1;
+}
+
+message DeleteConnectionRequest {
+  string id = 1;
+}
+
+message DeleteConnectionResponse {
+  bool ok = 1;
+}
+
+message UpsertConnectionRequest {
+  string id = 1;
+  string name = 2;
+  string source_shop_id = 3;
+  repeated string destination_shop_ids = 4;
+  optional bool enabled = 5;
+  optional bool inventory_sync_enabled = 6;
+  optional bool product_sync_enabled = 7;
+  // source_to_dest | dest_to_source | two_way
+  string inventory_direction = 8;
+  optional bool match_by_barcode = 9;
+  optional bool create_missing_products = 10;
+  map<string, bool> attribute_toggles = 11;
+}
+
+message Connection {
+  string id = 1;
+  string name = 2;
+  string source_shop_id = 3;
+  repeated string destination_shop_ids = 4;
+  bool enabled = 5;
+  bool inventory_sync_enabled = 6;
+  bool product_sync_enabled = 7;
+  string inventory_direction = 8;
+  bool match_by_barcode = 9;
+  bool create_missing_products = 10;
+  map<string, bool> attribute_toggles = 11;
+}
+
+message ListAttributeTogglesRequest {
+  string connection_id = 1;
+}
+
+message ListAttributeTogglesResponse {
+  string connection_id = 1;
+  map<string, bool> toggles = 2;
+}
+
+message SetAttributeTogglesRequest {
+  string connection_id = 1;
+  map<string, bool> toggles = 2;
+}
+
+message ListDefaultAttributesRequest {}
+
+message ListDefaultAttributesResponse {
+  repeated string attributes = 1;
+}
+
+message ListProductMappingsRequest {
+  string connection_id = 1;
+  string destination_shop_id = 2;
+}
+
+message ProductMapping {
+  string id = 1;
+  string connection_id = 2;
+  string destination_shop_id = 3;
+  string match_key = 4;
+  string match_kind = 5;
+  string source_product_id = 6;
+  string source_variant_id = 7;
+  string dest_product_id = 8;
+  string dest_variant_id = 9;
+  string last_synced_at = 10;
+}
+
+message ListProductMappingsResponse {
+  repeated ProductMapping mappings = 1;
+}
+
+message MapProductsBySkuRequest {
+  string connection_id = 1;
+  // Empty = all destinations on the connection.
+  string destination_shop_id = 2;
+  bool dry_run = 3;
+}
+
+message MapProductsBySkuResponse {
+  int32 linked = 1;
+  int32 unmatched_source = 2;
+  int32 unmatched_dest = 3;
+  repeated ProductMapping mappings = 4;
+  string notes = 5;
+}
+
+message SyncInventoryRequest {
+  string connection_id = 1;
+  bool dry_run = 2;
+}
+
+message InventoryDelta {
+  string match_key = 1;
+  string destination_shop_id = 2;
+  string source_variant_id = 3;
+  string dest_variant_id = 4;
+  int32 source_qty = 5;
+  int32 dest_qty = 6;
+  int32 planned_dest_qty = 7;
+  string action = 8; // set | skip | blocked
+  string reason = 9;
+}
+
+message SyncInventoryResponse {
+  int32 planned = 1;
+  int32 applied = 2;
+  int32 skipped = 3;
+  int32 blocked = 4;
+  repeated InventoryDelta deltas = 5;
+  string notes = 6;
+}
+
+message SyncProductsRequest {
+  string connection_id = 1;
+  bool dry_run = 2;
+}
+
+message ProductSyncAction {
+  string match_key = 1;
+  string destination_shop_id = 2;
+  string action = 3; // update | create | skip | blocked
+  repeated string attributes = 4;
+  string reason = 5;
+}
+
+message SyncProductsResponse {
+  int32 planned = 1;
+  int32 applied = 2;
+  int32 skipped = 3;
+  int32 blocked = 4;
+  repeated ProductSyncAction actions = 5;
+  string notes = 6;
+}

@@ -1,0 +1,21 @@
+# Binaries
+/bin/
+bin/
+
+# Vendor
+/vendor/
+
+# Local state
+/data/
+data/*.json
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+.DS_Store
+.env
+*.log
+node_modules/
+dist/
