@@ -8,13 +8,14 @@ Shops, OAuth/tokens, and Admin API access live in [`govel-shopify`](https://gith
 
 Design: Project store `docs/govel-syncio.md` (GV-75).
 
-## Features (v1 scaffold)
+## Features (v1)
 
 - Multi-store connections (one source → N destinations)
 - Attribute toggles for product sync (title, description, images, price, tags, variants, status, metafields, …)
 - SKU / barcode product mapping job
-- Inventory sync job (compare + plan; apply blocked until govel-shopify inventory write API)
-- Product sync job (toggled attrs; apply blocked until product write API)
+- Inventory sync via govel-shopify `POST /api/inventory/set` (`catalog.inventory_write`)
+- Product update via `PATCH /api/products/{id}`; create-missing via `POST /api/products` (`catalog.product_write`)
+- Preflight: destination shops must satisfy write use-cases when `granted_scopes` is set
 - Admin SPA for connections + toggles + dry-run/run jobs
 - Manifest DB schema + `graphql.enabled: true` for host GraphQL / IntraSPA
 
@@ -65,12 +66,18 @@ Plugin-owned recipes: `docs/fixtures/syncio-jobs.json`. Create via Govel Admin �
 - Admin widget: Syncio Connections
 - Frontend route: `/connections` (auto-prefixed)
 
-## Blockers (follow-ups in govel-shopify)
+## Destination shop scopes (required)
 
-1. Generic **inventory write** RPC/HTTP (`POST /api/inventory/set`) + use-case `catalog.inventory_write`
-2. Generic **product write/create** APIs + use-case `catalog.product_write`
+Declare `granted_scopes` on each govel-shopify shop used as a Syncio destination. Empty granted scopes = legacy allow (shopify-side); once set, missing scopes block writes.
 
-Until those land, Syncio dry-runs fully; apply paths return `blocked` with a clear reason.
+| Syncio feature | govel-shopify use-case | Shopify scopes |
+|----------------|------------------------|----------------|
+| Inventory apply | `catalog.inventory_write` | `write_inventory`, `read_inventory` |
+| Product update / create-missing | `catalog.product_write` | `write_products`, `read_products` |
+
+Also keep `read_products` on source + destinations for ListProducts / mapping.
+
+Depends on govel-shopify catalog write APIs ([PR #6](https://github.com/Digger-GmbH/govel-shopify/pull/6), `docs/catalog-write.md`).
 
 ## Docker
 
