@@ -1,14 +1,51 @@
 export function createApi(apiBase = "") {
   const base = apiBase.replace(/\/$/, "");
 
+  function getCsrfToken() {
+    try {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta && meta.content) return meta.content;
+      if (typeof window !== "undefined" && window.__GOVEL_CSRF_TOKEN__) {
+        return String(window.__GOVEL_CSRF_TOKEN__);
+      }
+      const el = document.querySelector("[data-csrf-token]");
+      if (el && el.dataset && el.dataset.csrfToken) return el.dataset.csrfToken;
+    } catch (_) {
+      /* ignore */
+    }
+    return "";
+  }
+
   async function request(path, options = {}) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    };
+    const csrf = getCsrfToken();
+    if (csrf) {
+      headers["X-CSRF-Token"] = csrf;
+    }
     const res = await fetch(`${base}${path}`, {
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      credentials: "same-origin",
       ...options,
+      headers,
     });
-    const data = await res.json().catch(() => ({}));
+    const raw = await res.text();
+    let data = {};
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = {};
+      }
+    }
     if (!res.ok) {
-      throw new Error(data.error || res.statusText || "request failed");
+      const fallback =
+        (typeof data.error === "string" && data.error) ||
+        (raw && raw.trim().slice(0, 240)) ||
+        res.statusText ||
+        `request failed (${res.status})`;
+      throw new Error(fallback);
     }
     return data;
   }
@@ -17,6 +54,7 @@ export function createApi(apiBase = "") {
     listShops: () => request("/api/shops"),
     listAttributes: () => request("/api/attributes"),
     listConnections: () => request("/api/connections"),
+    getDashboard: () => request("/api/dashboard"),
     upsertConnection: (body) =>
       request("/api/connections", { method: "POST", body: JSON.stringify(body) }),
     deleteConnection: (id) => request(`/api/connections/${id}`, { method: "DELETE" }),
@@ -50,6 +88,7 @@ export function el(tag, attrs = {}, children = []) {
     else if (k === "text") node.textContent = v;
     else if (k === "checked") node.checked = !!v;
     else if (k === "value") node.value = v;
+    else if (k === "html") node.innerHTML = v;
     else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (v !== undefined && v !== null) node.setAttribute(k, v);
   }
@@ -58,4 +97,13 @@ export function el(tag, attrs = {}, children = []) {
     node.append(child.nodeType ? child : document.createTextNode(String(child)));
   }
   return node;
+}
+
+export function formatTs(value) {
+  if (!value) return "—";
+  try {
+    return new Date(value).toLocaleString();
+  } catch {
+    return String(value);
+  }
 }

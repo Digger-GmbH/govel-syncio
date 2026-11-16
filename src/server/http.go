@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Digger-GmbH/govel-syncio/src/syncio"
 )
@@ -18,6 +19,7 @@ type HTTPServer struct {
 func NewHTTPServer(store *syncio.Store, engine *syncio.Engine, shopify *syncio.ShopifyClient, staticDir string) *HTTPServer {
 	h := &HTTPServer{Store: store, Engine: engine, Shopify: shopify, Mux: http.NewServeMux()}
 	h.Mux.HandleFunc("/api/health", h.handleHealth)
+	h.Mux.HandleFunc("/api/dashboard", h.handleDashboard)
 	h.Mux.HandleFunc("/api/attributes", h.handleAttributes)
 	h.Mux.HandleFunc("/api/shops", h.handleShops)
 	h.Mux.HandleFunc("/api/connections", h.handleConnections)
@@ -77,6 +79,72 @@ func (h *HTTPServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// handleDashboard returns a Space-facing overview: connections, mapping counts, last sync hints.
+func (h *HTTPServer) handleDashboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		writeJSON(w, http.StatusOK, map[string]string{"ok": "true"})
+		return
+	}
+	if r.Method != http.MethodGet {
+		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	conns := h.Store.List()
+	rows := make([]map[string]any, 0, len(conns))
+	enabled := 0
+	totalMappings := 0
+	totalOrders := 0
+
+	for _, c := range conns {
+		if c.Enabled {
+			enabled++
+		}
+		maps := h.Store.ListMappings(c.ID, "")
+		omaps := h.Store.ListOrderMappings(c.ID, "")
+		totalMappings += len(maps)
+		totalOrders += len(omaps)
+
+		var lastProductSync *string
+		for _, m := range maps {
+			if m.LastSyncedAt == nil {
+				continue
+			}
+			ts := m.LastSyncedAt.UTC().Format(time.RFC3339)
+			if lastProductSync == nil || ts > *lastProductSync {
+				lastProductSync = &ts
+			}
+		}
+		var lastFulfillmentSync *string
+		for _, m := range omaps {
+			if m.LastFulfillmentSync == nil {
+				continue
+			}
+			ts := m.LastFulfillmentSync.UTC().Format(time.RFC3339)
+			if lastFulfillmentSync == nil || ts > *lastFulfillmentSync {
+				lastFulfillmentSync = &ts
+			}
+		}
+
+		row := connJSON(c)
+		row["product_mapping_count"] = len(maps)
+		row["order_mapping_count"] = len(omaps)
+		row["last_product_sync_at"] = lastProductSync
+		row["last_fulfillment_sync_at"] = lastFulfillmentSync
+		rows = append(rows, row)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"summary": map[string]any{
+			"connection_count":      len(conns),
+			"enabled_count":         enabled,
+			"product_mapping_count": totalMappings,
+			"order_mapping_count":   totalOrders,
+		},
+		"connections": rows,
+	})
 }
 
 func (h *HTTPServer) handleIndex(w http.ResponseWriter, r *http.Request) {

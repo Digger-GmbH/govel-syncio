@@ -18,6 +18,7 @@ Design: Project store `docs/govel-syncio.md` (GV-75).
 - Order forwarding: paid dest orders → source `CreateOrder` (`orders.write`); tracking back via dest fulfillments (`orders.fulfillment_write`)
 - Preflight: shops must satisfy write use-cases when `granted_scopes` is set
 - Admin SPA for connections + toggles + dry-run/run jobs
+- **Syncio Space dashboard** (`SyncioDashboard` / `mountSyncioDashboard`) — connections overview, mapping counts, run-sync (operator fixture wires Space)
 - Manifest DB schema + `graphql.enabled: true` for host GraphQL / IntraSPA
 
 Deferred: payouts, WooCommerce.
@@ -63,11 +64,21 @@ Plugin-owned recipes: `docs/fixtures/syncio-jobs.json`. Create via Govel Admin �
 
 ## Manifest / install
 
-- Plugin id: `govelSyncio`
+- Plugin id: `govelSyncio` (version **0.2.0**)
 - Tables: `govel_syncio_connection`, `_destination`, `_attribute_toggle`, `_product_mapping`, `_order_mapping`, `_sync_cursor`
 - gRPC: `plugins.govel_syncio.v1.SyncioService` / descriptor `proto/syncio.desc`
-- Admin widget: Syncio Connections
-- Frontend route: `/connections` (auto-prefixed)
+- Admin widgets: Syncio Connections + Syncio Dashboard (Space)
+- Frontend: `/plugins/govelSyncio` proxy catch-all; `/connections` (auto-prefixed)
+
+### Syncio Space (govel.dev / Homolab)
+
+Plugin install does **not** create Space/Dashboard rows. After activate:
+
+1. Confirm assets: `/public/plugins/govelSyncio/assets/admin/syncio-dashboard-entry.js`
+2. Apply `docs/fixtures/syncio-space-dashboard.sql`
+3. Open Space **Syncio** (slug `syncio`) → dashboard **Syncio** (slug `syncio`)
+
+Details: [`docs/syncio-space-homolab.md`](docs/syncio-space-homolab.md).
 
 ## Destination shop scopes (required)
 
