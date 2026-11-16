@@ -62,3 +62,131 @@ button.primary { background: var(--accent); border-color: transparent; color: #0
 @media (max-width: 720px) {
   .dest-row { flex-direction: column; }
 }
+
+/* —— Space dashboard (scoped; safe inside Govel IntraSPA) —— */
+.sx-dashboard-host { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; }
+.sx-dashboard {
+  --sx-bg: #0f1419;
+  --sx-panel: #1a222c;
+  --sx-text: #e7eef7;
+  --sx-muted: #9aa8b8;
+  --sx-accent: #3d9a78;
+  --sx-danger: #d15b5b;
+  --sx-line: #2a3542;
+  color: var(--sx-text);
+  background:
+    radial-gradient(900px 420px at 8% -20%, #1d3a33 0%, transparent 55%),
+    radial-gradient(700px 360px at 100% 0%, #243044 0%, transparent 50%),
+    var(--sx-bg);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 1.4rem;
+  min-height: 100%;
+}
+.sx-dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.sx-dash-header h1 {
+  margin: 0 0 .2rem;
+  font-size: 1.55rem;
+  letter-spacing: -.02em;
+}
+.sx-dash-header p { margin: 0; color: var(--sx-muted); font-size: .92rem; }
+.sx-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .65rem;
+  margin-bottom: 1rem;
+}
+.sx-summary-card {
+  background: color-mix(in srgb, var(--sx-panel) 92%, transparent);
+  border: 1px solid var(--sx-line);
+  border-radius: 10px;
+  padding: .7rem .85rem;
+}
+.sx-summary-value { font-size: 1.35rem; font-weight: 650; letter-spacing: -.02em; }
+.sx-summary-label { color: var(--sx-muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; margin-top: .15rem; }
+.sx-empty {
+  border: 1px dashed var(--sx-line);
+  border-radius: 10px;
+  padding: 1.1rem;
+  color: var(--sx-muted);
+}
+.sx-empty strong { display: block; color: var(--sx-text); margin-bottom: .35rem; }
+.sx-empty p { margin: 0; line-height: 1.45; }
+.sx-conn-list { display: grid; gap: .85rem; }
+.sx-conn {
+  background: color-mix(in srgb, var(--sx-panel) 94%, transparent);
+  border: 1px solid var(--sx-line);
+  border-radius: 12px;
+  padding: .9rem 1rem 1rem;
+}
+.sx-conn-disabled { opacity: .72; }
+.sx-conn-top {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  align-items: flex-start;
+  margin-bottom: .55rem;
+}
+.sx-conn h2 { margin: 0 0 .2rem; font-size: 1.05rem; }
+.sx-meta { margin: 0; color: var(--sx-muted); font-size: .85rem; word-break: break-word; }
+.sx-status {
+  flex: 0 0 auto;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border: 1px solid var(--sx-line);
+  border-radius: 999px;
+  padding: .2rem .55rem;
+  color: var(--sx-muted);
+}
+.sx-status-on {
+  color: #04140f;
+  background: var(--sx-accent);
+  border-color: transparent;
+  font-weight: 650;
+}
+.sx-flags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .65rem; }
+.sx-flag {
+  font-size: .78rem;
+  border: 1px solid var(--sx-line);
+  border-radius: 999px;
+  padding: .15rem .5rem;
+  color: var(--sx-muted);
+}
+.sx-flag-on { color: #b7ebcf; border-color: #2f6b54; }
+.sx-flag-muted { color: var(--sx-muted); }
+.sx-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .35rem .85rem;
+  margin-bottom: .75rem;
+  font-size: .88rem;
+}
+.sx-muted { color: var(--sx-muted); }
+.sx-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.sx-btn {
+  font: inherit;
+  color: var(--sx-text);
+  background: #121820;
+  border: 1px solid var(--sx-line);
+  border-radius: 8px;
+  padding: .4rem .65rem;
+  cursor: pointer;
+}
+.sx-btn:hover { border-color: #3d5166; }
+.sx-btn-busy { opacity: .6; cursor: wait; }
+.sx-error { color: var(--sx-danger); margin: 0 0 .75rem; }
+.sx-notice { color: #8fd0b4; margin: 0 0 .75rem; white-space: pre-wrap; word-break: break-word; font-size: .9rem; }
+@media (max-width: 900px) {
+  .sx-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sx-stats { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .sx-summary { grid-template-columns: 1fr; }
+  .sx-conn-top { flex-direction: column; }
+}
