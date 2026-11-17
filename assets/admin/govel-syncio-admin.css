@@ -95,6 +95,19 @@ button.primary { background: var(--accent); border-color: transparent; color: #0
   letter-spacing: -.02em;
 }
 .sx-dash-header p { margin: 0; color: var(--sx-muted); font-size: .92rem; }
+.sx-dash-actions { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
+.sx-btn-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #04140f;
+  background: var(--sx-accent);
+  border-color: transparent;
+  font-weight: 600;
+}
+.sx-btn-link:hover { filter: brightness(1.05); border-color: transparent; }
+.sx-empty .sx-btn-link { margin-top: .65rem; }
+.sx-empty .sx-muted { margin-top: .65rem; font-size: .85rem; }
 .sx-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

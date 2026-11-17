@@ -15,7 +15,7 @@
   "use strict";
 
   var ASSET_BASE = "/public/plugins/govelSyncio/assets/admin";
-  var ASSET_VERSION = "0.2.0-space";
+  var ASSET_VERSION = "0.2.1-connections";
 
   function resolveRoot(containerId) {
     if (!containerId) return null;

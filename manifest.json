@@ -2,7 +2,7 @@
   "schemaVersion": "0.1.0",
   "plugin": {
     "id": "govelSyncio",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "name": "govel-syncio",
     "description": "Multi-shop Shopify inventory and product sync for Govel. Consumer of govel-shopify shops; connections, mappings, sync jobs, and Syncio Space dashboard live here — not in core.",
     "authors": [
@@ -261,6 +261,7 @@
       "js": [
         "assets/admin/api.js",
         "assets/admin/connections.js",
+        "assets/admin/connections-entry.js",
         "assets/admin/syncio-dashboard.js",
         "assets/admin/syncio-dashboard-entry.js",
         "assets/admin/govel-syncio-admin.js"
@@ -289,15 +290,18 @@
       {
         "key": "connectionsComponent",
         "name": "Syncio Connections",
+        "description": "Source ↔ destination connection CRUD. Not hosted in Admin → Plugins settings (env/lifecycle only). Prefer /plugins/govelSyncio/ or this dashboard widget.",
         "type": "widget",
         "mode": "spa",
+        "statusFlags": 8,
         "runtime": {
           "componentName": "Connections",
-          "bundleType": "esm",
-          "entryFunction": "mount",
+          "bundleType": "iife",
+          "entryFunction": "mountSyncioConnections",
           "assets": {
-            "js": ["assets/admin/connections.js"],
-            "css": ["assets/admin/govel-syncio-admin.css"]
+            "basePath": "assets/admin",
+            "js": ["connections-entry.js", "connections.js", "api.js"],
+            "css": ["govel-syncio-admin.css"]
           }
         }
       }
@@ -312,7 +316,8 @@
       {
         "key": "syncioConnections",
         "component": "connectionsComponent",
-        "title": "Syncio Connections"
+        "title": "Syncio Connections",
+        "description": "Create and edit source ↔ destination sync connections (CRUD)."
       }
     ]
   },

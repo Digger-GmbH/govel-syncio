@@ -16,7 +16,19 @@ On **install/activate** of plugin id `govelSyncio`, Govel:
 
 Manifest keys: `adminUi.components[].syncioDashboardComponent`, widget `syncioDashboard`.
 
-Admin Connections (`Connections` / ESM) remains available for CRUD; the Space dashboard is the overview + run-sync surface.
+## Connections CRUD (where Max actually edits them)
+
+**Admin → Plugins → govelSyncio does not host connection CRUD.** That page is install / env / activate / health only (host `admin_plugin_*`). Plugins cannot embed custom settings forms into the core plugin-settings page today.
+
+| Path | What |
+|------|------|
+| **Primary:** [https://govel.dev/plugins/govelSyncio/](https://govel.dev/plugins/govelSyncio/) | Plugin-proxy SPA → Connections editor (create source ↔ destination). Login required. |
+| Space → **Syncio** → **Manage connections** | Same URL from the Space dashboard header / empty state. |
+| Dashboard widget **Syncio Connections** | IIFE `mountSyncioConnections` — attach on any IntraSPA dashboard. |
+| Jet `/connections` | Alternate IntraSPA view (assets under `/public/plugins/govelSyncio/…`). |
+| `SYNCIO_CONNECTIONS_JSON` | Optional bootstrap only — not required for day-to-day CRUD. |
+
+Space dashboard (`SyncioDashboard`) is overview + run-sync; Connections is CRUD.
 
 ## Homolab / govel.dev install path
 
@@ -80,21 +92,23 @@ Required env (Homolab):
 
 ### Cache-bust after activate
 
-`syncio-dashboard-entry.js` loads ESM/CSS with `?v=` (`ASSET_VERSION`, currently `0.2.0-space`). After plugin **upgrade/activate**, hard-refresh the Syncio Space tab or purge `/public/plugins/govelSyncio/assets/admin/*` if CDN pins stale assets.
+`*-entry.js` loads ESM/CSS with `?v=` (`ASSET_VERSION`, currently `0.2.1-connections`). After plugin **upgrade/activate**, hard-refresh the Syncio Space tab or purge `/public/plugins/govelSyncio/assets/admin/*` if CDN pins stale assets.
 
 ## Max: how to open it on govel.dev
 
 | Step | Where |
 |------|--------|
-| Widget + assets | **govel-syncio** (`SyncioDashboard` / `mountSyncioDashboard`) |
-| Install / auth | **govel_plugin_system** Plugin Admin (generic) |
+| Widget + assets | **govel-syncio** (`SyncioDashboard` / `Connections`) |
+| Install / auth | **govel_plugin_system** Plugin Admin (generic; **no** custom CRUD there) |
 | Space + dashboard rows | **This fixture** or GraphQL (not core seed) |
+| Connection CRUD | `/plugins/govelSyncio/` or **Manage connections** from Space |
 | Live sync | Plugin healthy + `SHOPIFY_HTTP_BASE` + connections |
 
 1. Log in: [https://govel.dev](https://govel.dev) → Authentik.
 2. Space list → **Syncio** (slug `syncio`).
-3. Default dashboard: **Syncio** (slug `syncio`).
-4. Expect widget **SyncioDashboard** (connections overview, not only Admin → Plugins → connections).
+3. Default dashboard: **Syncio** (slug `syncio`) — overview widget.
+4. Click **Manage connections** (or open [https://govel.dev/plugins/govelSyncio/](https://govel.dev/plugins/govelSyncio/) directly).
+5. Create source ↔ destination; no `SYNCIO_CONNECTIONS_JSON` needed.
 
 ## Homolab deploy steps still needed after merge
 
