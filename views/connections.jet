@@ -1,7 +1,7 @@
 {{define content}}
 <div id="app"></div>
 <script type="module">
-import { mount } from "/assets/admin/connections.js";
-mount(document.getElementById("app"));
+import { mount } from "/public/plugins/govelSyncio/assets/admin/connections.js";
+mount(document.getElementById("app"), { apiBase: "/plugins/govelSyncio" });
 </script>
 {{end}}

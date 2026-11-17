@@ -152,15 +152,31 @@ func (h *HTTPServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	// Served via Govel plugin proxy at /plugins/govelSyncio/ (prefix stripped).
+	// Browser must call APIs under /plugins/govelSyncio/api/… — empty apiBase
+	// would hit host /api/… and fail. Prefer public AdminUI assets when present
+	// (same files AdminUIAction copies); fall back to plugin-served /assets/.
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write([]byte(`<!doctype html>
-<html><head><meta charset="utf-8"/><title>Syncio</title>
+<html><head><meta charset="utf-8"/><title>Syncio Connections</title>
+<link rel="stylesheet" href="/public/plugins/govelSyncio/assets/admin/govel-syncio-admin.css"/>
 <link rel="stylesheet" href="/assets/admin/govel-syncio-admin.css"/>
 </head><body>
 <div id="app"></div>
 <script type="module">
-import { mount } from "/assets/admin/connections.js";
-mount(document.getElementById("app"));
+const PUBLIC = "/public/plugins/govelSyncio/assets/admin/connections.js";
+const LOCAL = "/assets/admin/connections.js";
+const opts = { apiBase: "/plugins/govelSyncio" };
+async function boot() {
+  try {
+    const mod = await import(PUBLIC);
+    mod.mount(document.getElementById("app"), opts);
+  } catch (e) {
+    const mod = await import(LOCAL);
+    mod.mount(document.getElementById("app"), opts);
+  }
+}
+boot();
 </script>
 </body></html>`))
 }

@@ -14,8 +14,14 @@ const emptyForm = () => ({
   attribute_toggles: {},
 });
 
-export function mount(root, { apiBase = "" } = {}) {
-  const api = createApi(apiBase);
+const DEFAULT_API_BASE = "/plugins/govelSyncio";
+
+export function mount(root, { apiBase } = {}) {
+  const resolvedBase =
+    (apiBase && String(apiBase)) ||
+    (typeof window !== "undefined" && window.__GOVEL_SYNCIO_API__) ||
+    DEFAULT_API_BASE;
+  const api = createApi(String(resolvedBase));
   const state = {
     shops: [],
     connections: [],

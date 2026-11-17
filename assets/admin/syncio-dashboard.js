@@ -4,8 +4,15 @@
  */
 import { createApi, el, formatTs } from "./api.js";
 
-export function mount(root, { apiBase = "" } = {}) {
-  const api = createApi(apiBase);
+const DEFAULT_API_BASE = "/plugins/govelSyncio";
+const CONNECTIONS_URL = "/plugins/govelSyncio/";
+
+export function mount(root, { apiBase } = {}) {
+  const resolvedBase =
+    (apiBase && String(apiBase)) ||
+    (typeof window !== "undefined" && window.__GOVEL_SYNCIO_API__) ||
+    DEFAULT_API_BASE;
+  const api = createApi(String(resolvedBase));
   const state = {
     summary: {
       connection_count: 0,
@@ -107,11 +114,19 @@ export function mount(root, { apiBase = "" } = {}) {
               text: "Multi-shop inventory, product, and order sync via govel-shopify connections.",
             }),
           ]),
-          el("button", {
-            className: "sx-btn",
-            text: "Refresh",
-            onClick: () => refresh(),
-          }),
+          el("div", { className: "sx-dash-actions" }, [
+            el("a", {
+              className: "sx-btn sx-btn-link",
+              href: CONNECTIONS_URL,
+              text: "Manage connections",
+              title: "Open Syncio Connections CRUD (plugin proxy SPA)",
+            }),
+            el("button", {
+              className: "sx-btn",
+              text: "Refresh",
+              onClick: () => refresh(),
+            }),
+          ]),
         ]),
         state.error ? el("p", { className: "sx-error", text: state.error }) : null,
         state.notice ? el("p", { className: "sx-notice", text: state.notice }) : null,
@@ -125,7 +140,18 @@ export function mount(root, { apiBase = "" } = {}) {
           ? el("div", { className: "sx-empty" }, [
               el("strong", { text: "No connections yet" }),
               el("p", {
-                text: "Create a source ↔ destination link in Admin → Plugins → govelSyncio (Connections), or use the Admin Connections widget.",
+                text: "Admin → Plugins → govelSyncio is install/env only — it cannot host connection CRUD. Create a source ↔ destination link here:",
+              }),
+              el("p", {}, [
+                el("a", {
+                  className: "sx-btn sx-btn-link",
+                  href: CONNECTIONS_URL,
+                  text: "Open Connections editor →",
+                }),
+              ]),
+              el("p", {
+                className: "sx-muted",
+                text: "Or attach the Syncio Connections dashboard widget. SYNCIO_CONNECTIONS_JSON is optional bootstrap only.",
               }),
             ])
           : el("div", { className: "sx-conn-list" }, state.connections.map(renderConnection)),
