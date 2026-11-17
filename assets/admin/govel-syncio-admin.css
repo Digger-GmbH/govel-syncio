@@ -96,17 +96,39 @@ button.primary { background: var(--accent); border-color: transparent; color: #0
 }
 .sx-dash-header p { margin: 0; color: var(--sx-muted); font-size: .92rem; }
 .sx-dash-actions { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
-.sx-btn-link {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
+.sx-btn-primary {
   color: #04140f;
   background: var(--sx-accent);
   border-color: transparent;
-  font-weight: 600;
+  font-weight: 650;
 }
-.sx-btn-link:hover { filter: brightness(1.05); border-color: transparent; }
-.sx-empty .sx-btn-link { margin-top: .65rem; }
+.sx-btn-primary:hover { filter: brightness(1.06); border-color: transparent; }
+.sx-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem 1rem;
+  margin: 0 0 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid #2f6b54;
+  border-radius: 12px;
+  background: color-mix(in srgb, #1d3a33 55%, var(--sx-panel));
+}
+.sx-cta-copy { min-width: 12rem; flex: 1 1 14rem; }
+.sx-cta-copy strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: .2rem;
+}
+.sx-cta-copy p {
+  margin: 0;
+  color: var(--sx-muted);
+  font-size: .88rem;
+  line-height: 1.4;
+}
+.sx-cta-btn { flex: 0 0 auto; padding: .55rem .9rem; font-size: .95rem; }
+.sx-empty .sx-btn-primary { margin-top: .65rem; }
 .sx-empty .sx-muted { margin-top: .65rem; font-size: .85rem; }
 .sx-summary {
   display: grid;
@@ -120,8 +142,25 @@ button.primary { background: var(--accent); border-color: transparent; color: #0
   border-radius: 10px;
   padding: .7rem .85rem;
 }
+.sx-summary-card-action {
+  cursor: pointer;
+  border-color: #2f6b54;
+  transition: border-color .15s ease, background .15s ease;
+}
+.sx-summary-card-action:hover,
+.sx-summary-card-action:focus-visible {
+  outline: none;
+  border-color: var(--sx-accent);
+  background: color-mix(in srgb, #1d3a33 40%, var(--sx-panel));
+}
 .sx-summary-value { font-size: 1.35rem; font-weight: 650; letter-spacing: -.02em; }
 .sx-summary-label { color: var(--sx-muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; margin-top: .15rem; }
+.sx-summary-hint {
+  margin-top: .35rem;
+  color: #b7ebcf;
+  font-size: .78rem;
+  font-weight: 600;
+}
 .sx-empty {
   border: 1px dashed var(--sx-line);
   border-radius: 10px;

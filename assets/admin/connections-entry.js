@@ -20,7 +20,7 @@
   "use strict";
 
   var ASSET_BASE = "/public/plugins/govelSyncio/assets/admin";
-  var ASSET_VERSION = "0.2.1-connections";
+  var ASSET_VERSION = "0.2.2-connections-cta";
   var DEFAULT_API_BASE = "/plugins/govelSyncio";
 
   function resolveRoot(containerId) {

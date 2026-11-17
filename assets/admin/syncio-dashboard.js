@@ -7,6 +7,21 @@ import { createApi, el, formatTs } from "./api.js";
 const DEFAULT_API_BASE = "/plugins/govelSyncio";
 const CONNECTIONS_URL = "/plugins/govelSyncio/";
 
+/** Leave IntraSPA / dashboard host and open the Connections CRUD SPA. */
+function openConnections(ev) {
+  if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+  if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+  const target =
+    (typeof window !== "undefined" && (window.top || window)) || null;
+  if (target && target.location) {
+    target.location.assign(CONNECTIONS_URL);
+    return;
+  }
+  if (typeof window !== "undefined") {
+    window.location.href = CONNECTIONS_URL;
+  }
+}
+
 export function mount(root, { apiBase } = {}) {
   const resolvedBase =
     (apiBase && String(apiBase)) ||
@@ -30,6 +45,16 @@ export function mount(root, { apiBase } = {}) {
   function shopLabel(id) {
     const s = state.shops.find((x) => x.id === id);
     return s ? `${s.name} (${s.shop_domain})` : id || "—";
+  }
+
+  function connectionsButton(extraClass) {
+    return el("button", {
+      type: "button",
+      className: "sx-btn sx-btn-primary" + (extraClass ? " " + extraClass : ""),
+      text: "Open Connections",
+      title: "Open Syncio Connections at /plugins/govelSyncio/",
+      onClick: openConnections,
+    });
   }
 
   async function refresh() {
@@ -115,23 +140,31 @@ export function mount(root, { apiBase } = {}) {
             }),
           ]),
           el("div", { className: "sx-dash-actions" }, [
-            el("a", {
-              className: "sx-btn sx-btn-link",
-              href: CONNECTIONS_URL,
-              text: "Manage connections",
-              title: "Open Syncio Connections CRUD (plugin proxy SPA)",
-            }),
+            connectionsButton(),
             el("button", {
+              type: "button",
               className: "sx-btn",
               text: "Refresh",
               onClick: () => refresh(),
             }),
           ]),
         ]),
+        el("div", { className: "sx-cta" }, [
+          el("div", { className: "sx-cta-copy" }, [
+            el("strong", { text: "Connections" }),
+            el("p", {
+              text: "Create and edit source ↔ destination links. Opens /plugins/govelSyncio/ (not Admin → Plugins settings).",
+            }),
+          ]),
+          connectionsButton("sx-cta-btn"),
+        ]),
         state.error ? el("p", { className: "sx-error", text: state.error }) : null,
         state.notice ? el("p", { className: "sx-notice", text: state.notice }) : null,
         el("div", { className: "sx-summary" }, [
-          summaryCard("Connections", String(s.connection_count || 0)),
+          summaryCard("Connections", String(s.connection_count || 0), {
+            onClick: openConnections,
+            title: "Open Connections",
+          }),
           summaryCard("Enabled", String(s.enabled_count || 0)),
           summaryCard("Product mappings", String(s.product_mapping_count || 0)),
           summaryCard("Order mappings", String(s.order_mapping_count || 0)),
@@ -140,18 +173,12 @@ export function mount(root, { apiBase } = {}) {
           ? el("div", { className: "sx-empty" }, [
               el("strong", { text: "No connections yet" }),
               el("p", {
-                text: "Admin → Plugins → govelSyncio is install/env only — it cannot host connection CRUD. Create a source ↔ destination link here:",
+                text: "Admin → Plugins → govelSyncio is install/env only. Use Open Connections to create a source ↔ destination link.",
               }),
-              el("p", {}, [
-                el("a", {
-                  className: "sx-btn sx-btn-link",
-                  href: CONNECTIONS_URL,
-                  text: "Open Connections editor →",
-                }),
-              ]),
+              el("p", {}, [connectionsButton()]),
               el("p", {
                 className: "sx-muted",
-                text: "Or attach the Syncio Connections dashboard widget. SYNCIO_CONNECTIONS_JSON is optional bootstrap only.",
+                text: "SYNCIO_CONNECTIONS_JSON is optional bootstrap only.",
               }),
             ])
           : el("div", { className: "sx-conn-list" }, state.connections.map(renderConnection)),
@@ -159,11 +186,33 @@ export function mount(root, { apiBase } = {}) {
     );
   }
 
-  function summaryCard(label, value) {
-    return el("div", { className: "sx-summary-card" }, [
-      el("div", { className: "sx-summary-value", text: value }),
-      el("div", { className: "sx-summary-label", text: label }),
-    ]);
+  function summaryCard(label, value, opts = {}) {
+    const clickable = typeof opts.onClick === "function";
+    return el(
+      "div",
+      {
+        className: "sx-summary-card" + (clickable ? " sx-summary-card-action" : ""),
+        role: clickable ? "button" : undefined,
+        tabIndex: clickable ? "0" : undefined,
+        title: opts.title,
+        onClick: clickable ? opts.onClick : undefined,
+        onKeydown: clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                opts.onClick(e);
+              }
+            }
+          : undefined,
+      },
+      [
+        el("div", { className: "sx-summary-value", text: value }),
+        el("div", { className: "sx-summary-label", text: label }),
+        clickable
+          ? el("div", { className: "sx-summary-hint", text: "Open editor →" })
+          : null,
+      ]
+    );
   }
 
   function renderConnection(c) {

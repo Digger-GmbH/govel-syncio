@@ -92,7 +92,7 @@ Required env (Homolab):
 
 ### Cache-bust after activate
 
-`*-entry.js` loads ESM/CSS with `?v=` (`ASSET_VERSION`, currently `0.2.1-connections`). After plugin **upgrade/activate**, hard-refresh the Syncio Space tab or purge `/public/plugins/govelSyncio/assets/admin/*` if CDN pins stale assets.
+`*-entry.js` loads ESM/CSS with `?v=` (`ASSET_VERSION`, currently `0.2.2-connections-cta`). After plugin **upgrade/activate**, hard-refresh the Syncio Space tab or purge `/public/plugins/govelSyncio/assets/admin/*` if CDN pins stale assets.
 
 ## Max: how to open it on govel.dev
 
@@ -107,7 +107,7 @@ Required env (Homolab):
 1. Log in: [https://govel.dev](https://govel.dev) → Authentik.
 2. Space list → **Syncio** (slug `syncio`).
 3. Default dashboard: **Syncio** (slug `syncio`) — overview widget.
-4. Click **Manage connections** (or open [https://govel.dev/plugins/govelSyncio/](https://govel.dev/plugins/govelSyncio/) directly).
+4. Click **Open Connections** (header, green CTA bar, or the Connections summary card) — navigates to `/plugins/govelSyncio/`.
 5. Create source ↔ destination; no `SYNCIO_CONNECTIONS_JSON` needed.
 
 ## Homolab deploy steps still needed after merge
