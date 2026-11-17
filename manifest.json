@@ -2,7 +2,7 @@
   "schemaVersion": "0.1.0",
   "plugin": {
     "id": "govelSyncio",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "name": "govel-syncio",
     "description": "Multi-shop Shopify inventory and product sync for Govel. Consumer of govel-shopify shops; connections, mappings, sync jobs, and Syncio Space dashboard live here — not in core.",
     "authors": [
